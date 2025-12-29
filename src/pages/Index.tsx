@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
+import html2canvas from 'html2canvas';
 
 const Index = () => {
   const { toast } = useToast();
@@ -237,6 +238,35 @@ const Index = () => {
 
   const toggleFavorite = (itemId: string) => {
     setFavorites(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
+  };
+
+  // Download card as image function
+  const downloadCardAsImage = async (cardId: string, cardName: string) => {
+    const cardElement = document.getElementById(`card-${cardId}`);
+    if (!cardElement) return;
+
+    try {
+      const canvas = await html2canvas(cardElement, {
+        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      const link = document.createElement('a');
+      link.download = `${cardName}-${new Date().toLocaleDateString('en-US').replace(/\//g, '-')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      toast({
+        title: language === 'ar' ? 'تم تحميل الصورة بنجاح!' : 'Image downloaded successfully!',
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? 'حدث خطأ أثناء التحميل' : 'Error downloading image',
+        variant: 'destructive',
+      });
+    }
   };
 
   const toggleCardFlip = (cardId: string) => {
@@ -720,10 +750,19 @@ const Index = () => {
 
     if (item.category === 'currency') {
       return (
-        <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-gray-100 dark:border-gray-700 relative group glow-card">
-          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
-          </button>
+        <div key={item.id} id={`card-${item.id}`} className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-gray-100 dark:border-gray-700 relative group glow-card">
+          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => toggleFavorite(item.id)}>
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+            </button>
+            <button 
+              onClick={() => downloadCardAsImage(item.id, item.name)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+            >
+              <Download size={12} />
+              {t.download}
+            </button>
+          </div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
@@ -760,10 +799,19 @@ const Index = () => {
       );
     } else if (item.category === 'crypto') {
       return (
-        <div key={item.id} className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-purple-100 dark:border-purple-800 relative group glow-card">
-          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
-          </button>
+        <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-purple-100 dark:border-purple-800 relative group glow-card">
+          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => toggleFavorite(item.id)}>
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+            </button>
+            <button 
+              onClick={() => downloadCardAsImage(item.id, item.name)}
+              className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+            >
+              <Download size={12} />
+              {t.download}
+            </button>
+          </div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
@@ -794,10 +842,19 @@ const Index = () => {
       );
     } else if (item.category === 'gold') {
       return (
-        <div key={item.id} className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-amber-200 dark:border-amber-700 relative group glow-card">
-          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
-          </button>
+        <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-amber-200 dark:border-amber-700 relative group glow-card">
+          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => toggleFavorite(item.id)}>
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+            </button>
+            <button 
+              onClick={() => downloadCardAsImage(item.id, item.name)}
+              className="bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+            >
+              <Download size={12} />
+              {t.download}
+            </button>
+          </div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
@@ -823,10 +880,19 @@ const Index = () => {
       );
     } else if (item.category === 'transfer') {
       return (
-        <div key={item.id} className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-indigo-200 dark:border-indigo-700 relative group glow-card">
-          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
-          </button>
+        <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-indigo-200 dark:border-indigo-700 relative group glow-card">
+          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={() => toggleFavorite(item.id)}>
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+            </button>
+            <button 
+              onClick={() => downloadCardAsImage(item.id, item.name)}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+            >
+              <Download size={12} />
+              {t.download}
+            </button>
+          </div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
