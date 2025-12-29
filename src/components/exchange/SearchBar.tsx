@@ -20,8 +20,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, language }) => {
         placeholder={t.search}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all caret-emerald-500"
-        style={{ caretColor: 'auto' }}
+        className="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+        autoComplete="off"
+        spellCheck={false}
       />
     </div>
   );

@@ -28,10 +28,18 @@ const ExchangeCalculator: React.FC<CalculatorProps> = ({
 }) => {
   const t = translations[language];
   const inputRef = useRef<HTMLInputElement>(null);
+  const isCalculating = useRef(false);
 
   useEffect(() => {
-    onCalculate();
-  }, [amount, from, to, onCalculate]);
+    if (!isCalculating.current) {
+      isCalculating.current = true;
+      // Use requestAnimationFrame to avoid blocking input
+      requestAnimationFrame(() => {
+        onCalculate();
+        isCalculating.current = false;
+      });
+    }
+  }, [amount, from, to]);
 
   const handleFocus = () => {
     if (amount === '0' || amount === '') {
