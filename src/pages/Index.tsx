@@ -5,6 +5,7 @@ import {
   Zap, Award, Moon, Sun 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 
 const Index = () => {
   const { toast } = useToast();
@@ -717,7 +718,9 @@ const Index = () => {
             <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
           </button>
           <div className="flex items-center gap-3 mb-3">
-            <div className="flag-icon">💵</div>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
+              {getCurrencyIcon(item.id, "w-12 h-12")}
+            </div>
             <div>
               <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
@@ -755,7 +758,9 @@ const Index = () => {
             <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
           </button>
           <div className="flex items-center gap-3 mb-3">
-            <div className="crypto-icon">₿</div>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
+              {getCurrencyIcon(item.id, "w-12 h-12")}
+            </div>
             <div>
               <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
@@ -787,7 +792,9 @@ const Index = () => {
             <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
           </button>
           <div className="flex items-center gap-3 mb-3">
-            <div className="gold-icon">🥇</div>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
+              {getCurrencyIcon(item.id, "w-12 h-12")}
+            </div>
             <div>
               <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
@@ -814,7 +821,9 @@ const Index = () => {
             <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
           </button>
           <div className="flex items-center gap-3 mb-3">
-            <div className="transfer-icon">💳</div>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
+              {getCurrencyIcon(item.id, "w-12 h-12")}
+            </div>
             <div>
               <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
