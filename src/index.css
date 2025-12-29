@@ -242,16 +242,24 @@
   /* Live Ticker */
   .ticker-wrap {
     @apply overflow-hidden w-full;
+    position: relative;
   }
 
   .ticker {
     display: inline-flex;
-    animation: ticker 40s linear infinite;
     white-space: nowrap;
+    animation: ticker 30s linear infinite;
+    will-change: transform;
   }
 
   .ticker:hover {
     animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker {
+      animation: none;
+    }
   }
 
   /* Live pulse */
