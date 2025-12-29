@@ -10,8 +10,8 @@ import html2canvas from 'html2canvas';
 
 const Index = () => {
   const { toast } = useToast();
-  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
-  const [darkMode, setDarkMode] = useState(false);
+  const [language, setLanguage] = useState<'ar' | 'en'>('en');
+  const [darkMode, setDarkMode] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [lastUpdate, setLastUpdate] = useState(new Date());
