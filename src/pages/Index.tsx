@@ -528,9 +528,10 @@ const Index = () => {
                       type="text"
                       value={formData.fullname}
                       onChange={(e) => handleFormChange('fullname', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.username}</label>
@@ -538,9 +539,10 @@ const Index = () => {
                       type="text"
                       value={formData.username}
                       onChange={(e) => handleFormChange('username', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
@@ -549,9 +551,10 @@ const Index = () => {
                       maxLength={2}
                       value={formData.wilaya}
                       onChange={(e) => handleFormChange('wilaya', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
@@ -559,9 +562,10 @@ const Index = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleFormChange('email', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
@@ -569,9 +573,10 @@ const Index = () => {
                       type="password"
                       value={formData.password}
                       onChange={(e) => handleFormChange('password', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     {formError && <div className="text-red-300 text-xs">{formError}</div>}
@@ -596,9 +601,10 @@ const Index = () => {
                       type="text"
                       value={loginData.loginUser}
                       onChange={(e) => handleLoginChange('loginUser', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
@@ -606,9 +612,10 @@ const Index = () => {
                       type="password"
                       value={loginData.loginPass}
                       onChange={(e) => handleLoginChange('loginPass', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     {loginError && <div className="text-red-300 text-xs">{loginError}</div>}
@@ -929,7 +936,13 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.amount}</label>
-                <input type="number" value={calcAmount} onChange={(e) => setCalcAmount(parseFloat(e.target.value) || 0)} className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" />
+                <input 
+                  type="number" 
+                  value={calcAmount === 0 ? '' : calcAmount} 
+                  onChange={(e) => setCalcAmount(e.target.value === '' ? 0 : parseFloat(e.target.value))} 
+                  onFocus={(e) => { if (calcAmount === 0) e.target.value = ''; }}
+                  className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.from}</label>
