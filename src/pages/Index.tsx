@@ -1,352 +1,1075 @@
-import React, { useState, useEffect } from 'react';
-import { Search, RefreshCw, Loader2 } from 'lucide-react';
-import { Header } from '@/components/Header';
-import { PriceTicker } from '@/components/PriceTicker';
-import { ConverterCalculator } from '@/components/Calculator';
-import { CurrencyCard } from '@/components/CurrencyCard';
-import { CryptoCard } from '@/components/CryptoCard';
-import { GoldCard } from '@/components/GoldCard';
-import { TransferCard } from '@/components/TransferCard';
-import { LiveIndicator } from '@/components/LiveIndicator';
-import { useMultipleLivePrices } from '@/hooks/useLivePrice';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  TrendingUp, TrendingDown, RefreshCw, Download, Search, X, Info, 
+  Star, DollarSign, Heart, Calculator, CreditCard, Save, Shield, 
+  Zap, Award, Moon, Sun 
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const { toast } = useToast();
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const [darkMode, setDarkMode] = useState(false);
-  const [showCalculator, setShowCalculator] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [loading, setLoading] = useState(true);
-  const [rates, setRates] = useState<Record<string, number>>({});
-  const [favorites, setFavorites] = useState<string[]>([]);
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const { toast } = useToast();
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcAmount, setCalcAmount] = useState(100);
+  const [calcFrom, setCalcFrom] = useState('eur');
+  const [calcTo, setCalcTo] = useState('dzd');
+  const [loading, setLoading] = useState(true);
+  const [rates, setRates] = useState<any>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
-  const t = {
-    search: language === 'ar' ? 'ابحث عن عملة، ذهب، منصة...' : 'Search currency, gold, platform...',
-    categories: {
-      all: language === 'ar' ? 'الكل' : 'All',
-      currency: language === 'ar' ? 'العملات' : 'Currencies',
-      crypto: language === 'ar' ? 'الرقمية' : 'Crypto',
-      gold: language === 'ar' ? 'الذهب' : 'Gold',
-      transfer: language === 'ar' ? 'التحويل' : 'Transfer',
+  // Card System State
+  const [registered, setRegistered] = useState(false);
+  const [globalName, setGlobalName] = useState("");
+  const [balanceAmount, setBalanceAmount] = useState(0);
+  const [currentView, setCurrentView] = useState('register');
+  const [flippedCards, setFlippedCards] = useState({
+    main: false,
+    card2: false,
+    card3: false,
+    card4: false,
+    card5: false
+  });
+  const [formData, setFormData] = useState({
+    fullname: '',
+    username: '',
+    wilaya: '',
+    email: '',
+    password: ''
+  });
+  const [loginData, setLoginData] = useState({
+    loginUser: '',
+    loginPass: ''
+  });
+  const [formError, setFormError] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Translations
+  const translations = {
+    ar: {
+      title: 'E-Sekoir',
+      subtitle: 'منصة الصرف الشاملة',
+      search: 'ابحث عن عملة، ذهب، منصة...',
+      calculator: 'حاسبة التحويل',
+      categories: { all: 'الكل', currency: 'العملات', crypto: 'الرقمية', gold: 'الذهب', transfer: 'التحويل' },
+      popular: 'الأكثر تداولاً',
+      noResults: 'لا توجد نتائج',
+      tryAgain: 'حاول البحث بكلمات أخرى',
+      officialBank: 'البنك الرسمي',
+      squareBuy: 'شراء السكوار',
+      squareSell: 'بيع السكوار',
+      change24h: 'التغير 24 ساعة',
+      priceInDZD: 'السعر بالدينار',
+      priceInUSD: 'السعر بالدولار',
+      buy: 'شراء',
+      sell: 'بيع',
+      fees: 'الرسوم',
+      speed: 'السرعة',
+      rating: 'التقييم',
+      amount: 'المبلغ',
+      from: 'من',
+      to: 'إلى',
+      result: 'النتيجة',
+      estimate: '* الأسعار تقديرية',
+      favorites: 'المفضلة',
+      download: 'تحميل',
+      priceExplanation: 'كيف نحسب الأسعار؟',
+      priceStep1: 'السعر الرسمي: من البنك المركزي عبر API موثوق',
+      priceStep2: 'سعر السكوار الأساسي = السعر الرسمي × 1.85',
+      priceStep3: 'سعر الشراء (أنت تبيع) = -2.7%',
+      priceStep4: 'سعر البيع (أنت تشتري) = +2.7%',
+      priceStep5: 'الفرق 5.4% = عمولة الصراف',
+      apiSource: 'المصدر: ExchangeRate-API.com',
+      realTimeUpdate: 'تحديث كل دقيقة',
+      formulaTitle: 'معادلة الحساب',
+      dataSource: 'مصدر البيانات',
+      calculationMethod: 'طريقة الحساب',
+      importantNote: 'ملاحظة مهمة:',
+      noteText: 'أسعار السكوار تقديرية وقد تختلف قليلاً حسب المنطقة والصراف.',
+      liveData: 'بيانات حية ودقيقة',
+      perGram: 'للجرام',
+      fullname: 'الاسم الكامل (بالفرنسية)',
+      username: 'اسم المستخدم',
+      wilaya: 'الولاية (رقمين)',
+      email: 'البريد الإلكتروني',
+      password: 'كلمة المرور',
+      save: 'حفظ',
+      login: 'دخول',
+      register: 'تسجيل',
+      account: 'الحساب',
+      balance: 'الرصيد',
+      charge: 'شحن الرصيد',
+      edit: 'تعديل المعلومات',
+      logout: 'تسجيل الخروج',
+      backToRegister: 'رجوع للتسجيل',
+      showLogin: 'تسجيل الدخول',
+      upgradeCard: 'ترقية البطاقة',
+      cardHolder: 'اسم الحامل',
+      validThru: 'صالحة حتى',
+      loading: 'جاري التحميل...'
     },
-    popular: language === 'ar' ? 'الأكثر تداولاً' : 'Most Traded',
-    noResults: language === 'ar' ? 'لا توجد نتائج' : 'No Results',
-    loading: language === 'ar' ? 'جاري التحميل...' : 'Loading...',
-    lastUpdate: language === 'ar' ? 'آخر تحديث' : 'Last Update',
+    en: {
+      title: 'E-Sekoir',
+      subtitle: 'Complete Exchange Platform',
+      search: 'Search...',
+      calculator: 'Calculator',
+      categories: { all: 'All', currency: 'Currencies', crypto: 'Crypto', gold: 'Gold', transfer: 'Transfer' },
+      popular: 'Most Traded',
+      noResults: 'No Results',
+      tryAgain: 'Try different keywords',
+      officialBank: 'Official Bank',
+      squareBuy: 'Square Buy',
+      squareSell: 'Square Sell',
+      change24h: '24h Change',
+      priceInDZD: 'Price in DZD',
+      priceInUSD: 'Price in USD',
+      buy: 'Buy',
+      sell: 'Sell',
+      fees: 'Fees',
+      speed: 'Speed',
+      rating: 'Rating',
+      amount: 'Amount',
+      from: 'From',
+      to: 'To',
+      result: 'Result',
+      estimate: '* Est. prices',
+      favorites: 'Favorites',
+      download: 'Download',
+      priceExplanation: 'How We Calculate?',
+      priceStep1: 'Official Rate from API',
+      priceStep2: 'Square = Official × 1.85',
+      priceStep3: 'Buy = -2.7%',
+      priceStep4: 'Sell = +2.7%',
+      priceStep5: 'Diff 5.4% = Commission',
+      apiSource: 'Source: ExchangeRate-API',
+      realTimeUpdate: 'Updates every minute',
+      formulaTitle: 'Formula',
+      dataSource: 'Data Source',
+      calculationMethod: 'Method',
+      importantNote: 'Note:',
+      noteText: 'Prices may vary by location.',
+      liveData: 'Live data',
+      perGram: 'per gram',
+      fullname: 'Full Name (French)',
+      username: 'Username',
+      wilaya: 'Wilaya (2 digits)',
+      email: 'Email',
+      password: 'Password',
+      save: 'Save',
+      login: 'Login',
+      register: 'Register',
+      account: 'Account',
+      balance: 'Balance',
+      charge: 'Charge Balance',
+      edit: 'Edit Info',
+      logout: 'Logout',
+      backToRegister: 'Back to Register',
+      showLogin: 'Login',
+      upgradeCard: 'Upgrade Card',
+      cardHolder: 'Card Holder',
+      validThru: 'Valid Thru',
+      loading: 'Loading...'
+    }
   };
 
-  // Fetch initial rates
+  const t = translations[language];
+
+  // Load user data
   useEffect(() => {
-    const fetchRates = async () => {
-      try {
-        const response = await fetch('https://api.exchangerate-api.com/v4/latest/DZD');
-        const data = await response.json();
-        setRates(data.rates);
-        setLastUpdate(new Date());
-      } catch (error) {
-        // Fallback rates
-        setRates({ EUR: 0.00665, USD: 0.00729, GBP: 0.00577, CAD: 0.01023, TRY: 0.21, AED: 0.0268 });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRates();
+    const stored = localStorage.getItem("userData");
+    if (stored) {
+      const data = JSON.parse(stored);
+      setGlobalName(data.fullname);
+      setBalanceAmount(data.balance || 0);
+      setRegistered(true);
+      setCurrentView('account');
+    }
   }, []);
 
-  // Dark mode
+  // Load dark mode preference
   useEffect(() => {
-    if (darkMode) {
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedDarkMode);
+    if (savedDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  // Fetch rates
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const currencyResponse = await fetch('https://api.exchangerate-api.com/v4/latest/DZD');
+      const currencyData = await currencyResponse.json();
+      setRates({ currencies: currencyData.rates });
+      setLastUpdate(new Date());
+    } catch (error) {
+      setRates({ currencies: { EUR: 0.00665, USD: 0.00729, GBP: 0.00577, CAD: 0.01023, TRY: 0.21, AED: 0.0268 } });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    if (newDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [darkMode]);
+  };
 
-  // Calculate square rates
   const getSquareRate = (officialRate: number) => Math.round(officialRate * 1.85);
   const getSquareBuyRate = (officialRate: number) => Math.round(officialRate * 1.80);
   const getSquareSellRate = (officialRate: number) => Math.round(officialRate * 1.90);
 
-  // Currency data with live prices
-  const currencyBaseData = [
-    { id: 'eur', code: 'EUR', name: language === 'ar' ? 'اليورو' : 'Euro', icon: '€' },
-    { id: 'usd', code: 'USD', name: language === 'ar' ? 'الدولار' : 'US Dollar', icon: '$' },
-    { id: 'gbp', code: 'GBP', name: language === 'ar' ? 'الجنيه' : 'Pound', icon: '£' },
-    { id: 'cad', code: 'CAD', name: language === 'ar' ? 'الكندي' : 'Canadian', icon: 'C$' },
-    { id: 'try', code: 'TRY', name: language === 'ar' ? 'الليرة التركية' : 'Turkish Lira', icon: '₺' },
-    { id: 'aed', code: 'AED', name: language === 'ar' ? 'الدرهم الإماراتي' : 'UAE Dirham', icon: 'د.إ' },
-  ];
+  const toggleFavorite = (itemId: string) => {
+    setFavorites(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
+  };
 
-  const currenciesWithRates = currencyBaseData.map(c => ({
-    ...c,
-    baseValue: rates[c.code] ? Math.round(1 / rates[c.code]) : 150,
-  }));
+  const toggleCardFlip = (cardId: string) => {
+    setFlippedCards({
+      main: false,
+      card2: false,
+      card3: false,
+      card4: false,
+      card5: false
+    });
 
-  const livePrices = useMultipleLivePrices(currenciesWithRates);
+    setTimeout(() => {
+      setFlippedCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
+    }, 50);
+  };
 
-  // Crypto data
-  const cryptoData = [
-    { id: 'btc', name: 'Bitcoin', symbol: 'BTC', icon: '₿', priceUSD: 95000, priceDZD: 12500000, change24h: 2.5 },
-    { id: 'eth', name: 'Ethereum', symbol: 'ETH', icon: 'Ξ', priceUSD: 3400, priceDZD: 450000, change24h: -1.2 },
-    { id: 'usdt', name: 'Tether', symbol: 'USDT', icon: '₮', priceUSD: 1, priceDZD: 137, change24h: 0.01 },
-    { id: 'bnb', name: 'Binance', symbol: 'BNB', icon: 'B', priceUSD: 650, priceDZD: 85000, change24h: 3.1 },
-  ];
+  const handleFormChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormError('');
+  };
 
-  // Gold data
-  const goldData = [
-    { id: 'gold24', name: language === 'ar' ? 'ذهب 24 قيراط' : 'Gold 24K', symbol: '24K', icon: '🥇', buyPrice: 15500, change24h: 0.8 },
-    { id: 'gold21', name: language === 'ar' ? 'ذهب 21 قيراط' : 'Gold 21K', symbol: '21K', icon: '🥈', buyPrice: 13500, change24h: 0.5 },
-    { id: 'gold18', name: language === 'ar' ? 'ذهب 18 قيراط' : 'Gold 18K', symbol: '18K', icon: '🥉', buyPrice: 11500, change24h: 0.3 },
-  ];
+  const handleLoginChange = (field: string, value: string) => {
+    setLoginData(prev => ({ ...prev, [field]: value }));
+    setLoginError('');
+  };
 
-  // Transfer data
-  const transferData = [
-    { id: 'paysera', name: 'Paysera', symbol: 'EUR', icon: '💳', buyPrice: 245, sellPrice: 250, fees: '0.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.8 },
-    { id: 'wise', name: 'Wise', symbol: 'EUR', icon: '🌐', buyPrice: 243, sellPrice: 248, fees: '0.7%', speed: language === 'ar' ? '1-2 يوم' : '1-2 days', rating: 4.7 },
-    { id: 'paypal', name: 'PayPal', symbol: 'USD', icon: '💰', buyPrice: 200, sellPrice: 205, fees: '2.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.5 },
-  ];
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
 
-  // Ticker items
-  const tickerItems = currencyBaseData.map(c => ({
-    symbol: c.code,
-    name: c.name,
-    price: livePrices[c.id]?.value || 150,
-    change: (Math.random() - 0.5) * 4,
-  }));
+    if (!/^[A-Za-zÀ-ÖØ-öø-ÿŒœ\s]+$/.test(formData.fullname)) {
+      setFormError('الاسم يجب أن يكون بالحروف الفرنسية');
+      return;
+    }
+    if (!/^\d{2}$/.test(formData.wilaya)) {
+      setFormError('رقم الولاية غير صحيح');
+      return;
+    }
 
-  const toggleFavorite = (id: string) => {
-    setFavorites(prev => 
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+    setGlobalName(formData.fullname);
+    setRegistered(true);
+    setBalanceAmount(0);
+    setCurrentView('account');
+
+    localStorage.setItem("userData", JSON.stringify({
+      fullname: formData.fullname,
+      username: formData.username,
+      email: formData.email,
+      wilaya: formData.wilaya,
+      balance: 0
+    }));
+    
+    toast({
+      title: language === 'ar' ? 'تم التسجيل بنجاح!' : 'Registration Successful!',
+    });
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const stored = localStorage.getItem("userData");
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.username === loginData.loginUser || data.email === loginData.loginUser) {
+        setGlobalName(data.fullname);
+        setBalanceAmount(data.balance || 0);
+        setRegistered(true);
+        setCurrentView('account');
+        setLoginError('');
+        toast({
+          title: language === 'ar' ? 'مرحباً بك!' : 'Welcome back!',
+        });
+      } else {
+        setLoginError(language === 'ar' ? 'اسم المستخدم أو كلمة المرور غير صحيحة' : 'Invalid credentials');
+      }
+    } else {
+      setLoginError(language === 'ar' ? 'لا يوجد حساب مسجل' : 'No account found');
+    }
+  };
+
+  const handleCharge = () => {
+    const amount = prompt(language === 'ar' ? "أدخل مبلغ الشحن (€):" : "Enter charge amount (€):", "10");
+    if (amount && !isNaN(Number(amount))) {
+      const newBalance = balanceAmount + parseFloat(amount);
+      setBalanceAmount(newBalance);
+
+      const stored = localStorage.getItem("userData");
+      if (stored) {
+        const data = JSON.parse(stored);
+        localStorage.setItem("userData", JSON.stringify({
+          ...data,
+          balance: newBalance
+        }));
+      }
+
+      toast({
+        title: `✅ ${language === 'ar' ? 'تم شحن' : 'Charged'} ${amount} €`,
+      });
+    }
+  };
+
+  const handleLogout = () => {
+    setRegistered(false);
+    setCurrentView('register');
+    setGlobalName('');
+    setBalanceAmount(0);
+    setFormData({ fullname: '', username: '', wilaya: '', email: '', password: '' });
+    setLoginData({ loginUser: '', loginPass: '' });
+    setFlippedCards({ main: false, card2: false, card3: false, card4: false, card5: false });
+    localStorage.removeItem("userData");
+  };
+
+  const getCardNumber = (wilaya: string = '16') => {
+    return `2024 ${wilaya}00 0000 0001`;
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US').format(num);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString(language === 'ar' ? 'ar-DZ' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
+  const calculateConversion = () => {
+    if (!rates) return 0;
+    let result = calcAmount;
+
+    if (calcFrom === 'dzd') {
+      if (calcTo === 'eur') result = calcAmount * (rates.currencies.EUR || 0.00665);
+      else if (calcTo === 'usd') result = calcAmount * (rates.currencies.USD || 0.00729);
+      else if (calcTo === 'gbp') result = calcAmount * (rates.currencies.GBP || 0.00577);
+    } else if (calcTo === 'dzd') {
+      if (calcFrom === 'eur') result = calcAmount / (rates.currencies.EUR || 0.00665);
+      else if (calcFrom === 'usd') result = calcAmount / (rates.currencies.USD || 0.00729);
+      else if (calcFrom === 'gbp') result = calcAmount / (rates.currencies.GBP || 0.00577);
+    }
+
+    return result;
+  };
+
+  // Exchange data
+  const exchangeData = rates ? {
+    currencies: [
+      { id: 'eur', name: language === 'ar' ? 'اليورو' : 'Euro', symbol: 'EUR', icon: 'fa-euro-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.EUR),
+        square: getSquareRate(Math.round(1 / rates.currencies.EUR)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.EUR)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.EUR)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
+      { id: 'usd', name: language === 'ar' ? 'الدولار' : 'US Dollar', symbol: 'USD', icon: 'fa-dollar-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.USD),
+        square: getSquareRate(Math.round(1 / rates.currencies.USD)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.USD)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.USD)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
+      { id: 'gbp', name: language === 'ar' ? 'الجنيه' : 'Pound', symbol: 'GBP', icon: 'fa-sterling-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.GBP),
+        square: getSquareRate(Math.round(1 / rates.currencies.GBP)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.GBP)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.GBP)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
+      { id: 'cad', name: language === 'ar' ? 'الكندي' : 'Canadian', symbol: 'CAD', icon: 'fa-canadian-maple-leaf', category: 'currency',
+        official: Math.round(1 / rates.currencies.CAD),
+        square: getSquareRate(Math.round(1 / rates.currencies.CAD)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.CAD)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.CAD)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false },
+      { id: 'try', name: language === 'ar' ? 'الليرة التركية' : 'Turkish Lira', symbol: 'TRY', icon: 'fa-lira-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.TRY),
+        square: getSquareRate(Math.round(1 / rates.currencies.TRY)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.TRY)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.TRY)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false },
+      { id: 'aed', name: language === 'ar' ? 'الدرهم الإماراتي' : 'UAE Dirham', symbol: 'AED', icon: 'fa-coins', category: 'currency',
+        official: Math.round(1 / rates.currencies.AED),
+        square: getSquareRate(Math.round(1 / rates.currencies.AED)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.AED)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.AED)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false }
+    ],
+    crypto: [
+      { id: 'btc', name: 'Bitcoin', symbol: 'BTC', icon: 'fa-bitcoin-sign', category: 'crypto',
+        price: { dzd: 12500000, usd: 95000 },
+        change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
+      { id: 'eth', name: 'Ethereum', symbol: 'ETH', icon: 'fa-ethereum', category: 'crypto',
+        price: { dzd: 450000, usd: 3400 },
+        change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
+      { id: 'usdt', name: 'Tether', symbol: 'USDT', icon: 'fa-dollar-sign', category: 'crypto',
+        price: { dzd: 137, usd: 1 },
+        change24h: +(Math.random() * 0.5 - 0.25).toFixed(2), popular: true },
+      { id: 'bnb', name: 'Binance Coin', symbol: 'BNB', icon: 'fa-coins', category: 'crypto',
+        price: { dzd: 85000, usd: 650 },
+        change24h: +(Math.random() * 8 - 4).toFixed(2), popular: false }
+    ],
+    gold: [
+      { id: 'gold24', name: language === 'ar' ? 'ذهب 24 قيراط' : 'Gold 24K', symbol: '24K', icon: 'fa-coins', category: 'gold', buy: 15500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
+      { id: 'gold21', name: language === 'ar' ? 'ذهب 21 قيراط' : 'Gold 21K', symbol: '21K', icon: 'fa-coins', category: 'gold', buy: 13500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
+      { id: 'gold18', name: language === 'ar' ? 'ذهب 18 قيراط' : 'Gold 18K', symbol: '18K', icon: 'fa-coins', category: 'gold', buy: 11500, change24h: +(Math.random() * 2).toFixed(2), popular: false }
+    ],
+    transfer: [
+      { id: 'paysera', name: 'Paysera', symbol: 'EUR', icon: 'fa-credit-card', category: 'transfer', buy: 245, sell: 250, fees: '0.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.8 },
+      { id: 'wise', name: 'Wise', symbol: 'EUR', icon: 'fa-globe', category: 'transfer', buy: 243, sell: 248, fees: '0.7%', speed: language === 'ar' ? '1-2 يوم' : '1-2 days', rating: 4.7 },
+      { id: 'paypal', name: 'PayPal', symbol: 'USD', icon: 'fa-paypal', category: 'transfer', buy: 200, sell: 205, fees: '2.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.5 },
+      { id: 'skrill', name: 'Skrill', symbol: 'EUR', icon: 'fa-wallet', category: 'transfer', buy: 240, sell: 245, fees: '1.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.3 }
+    ]
+  } : null;
+
+  // Filter data
+  const getAllItems = () => {
+    if (!exchangeData) return [];
+    const all = [
+      ...exchangeData.currencies,
+      ...exchangeData.crypto,
+      ...exchangeData.gold,
+      ...exchangeData.transfer
+    ];
+    return all.filter(item => {
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.symbol.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  };
+
+  // Enhanced Bank Card Component
+  const EnhancedBankCard = ({ cardId, title, gradient, cardNumber, isMain = false }: {
+    cardId: string;
+    title: string;
+    gradient: string;
+    cardNumber: string;
+    isMain?: boolean;
+  }) => {
+    const isFlipped = flippedCards[cardId as keyof typeof flippedCards];
+    const stored = localStorage.getItem("userData");
+    const userData = stored ? JSON.parse(stored) : null;
+    const displayName = registered && globalName ? globalName.toUpperCase() : 'E-SEKOIR USER';
+    const displayCardNumber = registered && userData?.wilaya ? getCardNumber(userData.wilaya) : cardNumber;
+
+    const handleCardClick = () => {
+      if (isMain) {
+        toggleCardFlip(cardId);
+      }
+    };
+
+    const handleSimpleFlip = () => {
+      if (!isMain) {
+        toggleCardFlip(cardId);
+      }
+    };
+
+    return (
+      <div className="card-3d-container" onClick={handleSimpleFlip}>
+        <div className={`card-3d ${isFlipped ? 'flipped' : ''}`}>
+          <div
+            className={`card-3d-face card-3d-front ${gradient}`}
+            onClick={isMain ? handleCardClick : undefined}
+          >
+            <div className="text-2xl font-bold mb-3">{title}</div>
+            <div className="card-chip"></div>
+            <div className="text-xl tracking-wider font-semibold" style={{ letterSpacing: '0.15em' }} dir="ltr">
+              {displayCardNumber}
+            </div>
+            <div className="flex justify-between items-end mt-4">
+              <div>
+                <div className="text-xs opacity-80 uppercase tracking-wide">{t.cardHolder}</div>
+                <div className="text-sm font-semibold uppercase">{displayName}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs opacity-80 uppercase tracking-wide">{t.validThru}</div>
+                <div className="text-sm font-semibold">12/2028</div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`card-3d-face card-3d-back ${gradient}`}
+            onClick={(e) => { if (!isMain) e.stopPropagation(); }}
+          >
+            {isMain ? (
+              <div className="card-scroll" onClick={(e) => e.stopPropagation()}>
+                {currentView === 'register' && (
+                  <form onSubmit={handleRegister} className="space-y-2">
+                    <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
+                    <input
+                      type="text"
+                      value={formData.fullname}
+                      onChange={(e) => handleFormChange('fullname', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      required
+                      autoComplete="off"
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => handleFormChange('username', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      required
+                      autoComplete="off"
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
+                    <input
+                      type="text"
+                      maxLength={2}
+                      value={formData.wilaya}
+                      onChange={(e) => handleFormChange('wilaya', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      required
+                      autoComplete="off"
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.email}</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleFormChange('email', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      required
+                      autoComplete="off"
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.password}</label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleFormChange('password', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      required
+                      autoComplete="off"
+                    />
+
+                    {formError && <div className="text-red-300 text-xs">{formError}</div>}
+
+                    <button type="submit" className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold">
+                      {t.save}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('login')}
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
+                    >
+                      {t.showLogin}
+                    </button>
+                  </form>
+                )}
+
+                {currentView === 'login' && (
+                  <form onSubmit={handleLogin} className="space-y-2">
+                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
+                    <input
+                      type="text"
+                      value={loginData.loginUser}
+                      onChange={(e) => handleLoginChange('loginUser', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      required
+                      autoComplete="off"
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.password}</label>
+                    <input
+                      type="password"
+                      value={loginData.loginPass}
+                      onChange={(e) => handleLoginChange('loginPass', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      required
+                      autoComplete="off"
+                    />
+
+                    {loginError && <div className="text-red-300 text-xs">{loginError}</div>}
+
+                    <button type="submit" className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold">
+                      {t.login}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('register')}
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
+                    >
+                      {t.backToRegister}
+                    </button>
+                  </form>
+                )}
+
+                {currentView === 'account' && (
+                  <div className="text-center space-y-3">
+                    <h3 className="text-lg font-bold">{globalName}</h3>
+                    <div className="text-sm opacity-90">{t.balance}</div>
+                    <div className="text-3xl font-bold">{balanceAmount.toFixed(2)} €</div>
+
+                    <button
+                      onClick={handleCharge}
+                      className="w-full bg-gradient-to-r from-yellow-400 to-yellow-300 text-gray-900 py-2 rounded-lg font-bold"
+                    >
+                      {t.charge}
+                    </button>
+                    <button
+                      onClick={() => setCurrentView('register')}
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
+                    >
+                      {t.edit}
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full bg-gradient-to-r from-red-500 to-red-400 text-white py-2 rounded-lg font-bold"
+                    >
+                      {t.logout}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <button
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-300 text-gray-900 px-6 py-3 rounded-xl font-bold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toast({ title: t.upgradeCard });
+                  }}
+                >
+                  {t.upgradeCard}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     );
   };
 
-  const handleDownload = (item: any) => {
-    toast({
-      title: language === 'ar' ? 'جاري التحميل...' : 'Downloading...',
-      description: `${item.name} - ${item.symbol}`,
-    });
+  // Ticker Component
+  const PriceTicker = () => {
+    if (!exchangeData) return null;
+    
+    const tickerItems = exchangeData.currencies.map(c => ({
+      symbol: c.symbol,
+      name: c.name,
+      official: c.official,
+      change: c.change24h
+    }));
+    
+    const duplicatedItems = [...tickerItems, ...tickerItems];
+
+    return (
+      <div className="ticker-wrap bg-gradient-to-r from-emerald-700 to-blue-700 py-2 border-y border-white/10">
+        <div className="ticker">
+          {duplicatedItems.map((item, index) => (
+            <div
+              key={`${item.symbol}-${index}`}
+              className="inline-flex items-center gap-3 px-6 border-l border-white/20 text-white"
+            >
+              <span className="font-bold">{item.symbol}</span>
+              <span className="text-emerald-200 text-sm">{item.name}</span>
+              <span className="font-bold">{formatNumber(item.official)} DZD</span>
+              <span className={`flex items-center gap-1 text-sm font-semibold ${item.change >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                {item.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
-  // Filter data
-  const filterData = (data: any[], category: string) => {
-    return data.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           item.symbol?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
-    });
+  // Render Item Card
+  const renderItemCard = (item: any) => {
+    const isFavorite = favorites.includes(item.id);
+
+    if (item.category === 'currency') {
+      return (
+        <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-gray-100 dark:border-gray-700 relative group glow-card">
+          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+          </button>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flag-icon">💵</div>
+            <div>
+              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-2">
+              <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold">{t.officialBank}</div>
+              <div className="text-xl font-bold text-blue-800 dark:text-blue-200">{formatNumber(item.official)} DZD</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2">
+                <div className="text-xs text-green-600 dark:text-green-400 font-semibold">{t.squareBuy}</div>
+                <div className="text-lg font-bold text-green-800 dark:text-green-200">{formatNumber(item.squareBuy)}</div>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-2">
+                <div className="text-xs text-red-600 dark:text-red-400 font-semibold">{t.squareSell}</div>
+                <div className="text-lg font-bold text-red-800 dark:text-red-200">{formatNumber(item.squareSell)}</div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
+              <span className="text-xs text-gray-500">{t.change24h}</span>
+              <span className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {item.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                {Math.abs(item.change24h)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    } else if (item.category === 'crypto') {
+      return (
+        <div key={item.id} className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-purple-100 dark:border-purple-800 relative group glow-card">
+          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+          </button>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="crypto-icon">₿</div>
+            <div>
+              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div>
+              <div className="text-xs text-purple-600 dark:text-purple-400 font-semibold">{t.priceInDZD}</div>
+              <div className="text-xl font-bold text-purple-800 dark:text-purple-200">{formatNumber(item.price.dzd)} DZD</div>
+            </div>
+            <div>
+              <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold">{t.priceInUSD}</div>
+              <div className="text-lg font-bold text-blue-800 dark:text-blue-200">${formatNumber(item.price.usd)}</div>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-purple-100 dark:border-purple-700">
+              <span className="text-xs text-gray-500">{t.change24h}</span>
+              <span className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {item.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                {Math.abs(item.change24h)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    } else if (item.category === 'gold') {
+      return (
+        <div key={item.id} className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-amber-200 dark:border-amber-700 relative group glow-card">
+          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+          </button>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="gold-icon">🥇</div>
+            <div>
+              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
+            </div>
+          </div>
+          <div className="bg-amber-100 dark:bg-amber-800/30 rounded-lg p-3">
+            <div className="text-xs text-amber-700 dark:text-amber-300 font-semibold">{t.buy}</div>
+            <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">{formatNumber(item.buy)} DZD</div>
+            <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">{t.perGram}</div>
+          </div>
+          <div className="flex justify-between items-center pt-2 border-t border-amber-200 dark:border-amber-700 mt-2">
+            <span className="text-xs text-gray-600 dark:text-gray-400">{t.change24h}</span>
+            <span className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {item.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              {Math.abs(item.change24h)}%
+            </span>
+          </div>
+        </div>
+      );
+    } else if (item.category === 'transfer') {
+      return (
+        <div key={item.id} className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-indigo-200 dark:border-indigo-700 relative group glow-card">
+          <button onClick={() => toggleFavorite(item.id)} className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
+          </button>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="transfer-icon">💳</div>
+            <div>
+              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2">
+                <div className="text-xs text-green-600 dark:text-green-400 font-semibold">{t.buy}</div>
+                <div className="text-lg font-bold text-green-800 dark:text-green-200">{formatNumber(item.buy)} DZD</div>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-2">
+                <div className="text-xs text-red-600 dark:text-red-400 font-semibold">{t.sell}</div>
+                <div className="text-lg font-bold text-red-800 dark:text-red-200">{formatNumber(item.sell)} DZD</div>
+              </div>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">{t.fees}</span>
+              <span className="font-bold text-indigo-800 dark:text-indigo-300">{item.fees}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">{t.speed}</span>
+              <span className="font-semibold text-blue-700 dark:text-blue-300">{item.speed}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">{t.rating}</span>
+              <div className="flex items-center gap-1">
+                <Star size={14} className="text-amber-500" fill="currentColor" />
+                <span className="font-bold">{item.rating}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-br from-gray-50 via-blue-50 to-emerald-50'}`}>
         <div className="text-center">
-          <Loader2 className="animate-spin mx-auto mb-4 text-primary" size={48} />
-          <p className="text-xl font-bold text-foreground">{t.loading}</p>
+          <RefreshCw className={`animate-spin mx-auto mb-4 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} size={48} />
+          <p className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{t.loading}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <Header
-        language={language}
-        darkMode={darkMode}
-        onToggleLanguage={() => setLanguage(l => l === 'ar' ? 'en' : 'ar')}
-        onToggleDarkMode={() => setDarkMode(d => !d)}
-        onToggleCalculator={() => setShowCalculator(s => !s)}
-      />
+    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-br from-gray-50 via-blue-50 to-emerald-50'}`} dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Header */}
+      <header className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
+                <DollarSign size={28} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl md:text-2xl font-bold">{t.title}</h1>
+                  <div className="flex items-center gap-1">
+                    <span className="live-dot" />
+                    <span className="text-xs font-semibold text-green-200">LIVE</span>
+                  </div>
+                </div>
+                <p className="text-xs text-emerald-100">{t.subtitle}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-emerald-100 hidden md:inline">{formatTime(lastUpdate)}</span>
+              <button onClick={toggleDarkMode} className="bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-all">
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')} className="bg-white/20 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-white/30 transition-all">
+                {language === 'ar' ? 'EN' : 'عربي'}
+              </button>
+              <button onClick={() => setShowCalculator(!showCalculator)} className="bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-all">
+                <Calculator size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
 
-      {/* Live Ticker */}
-      <PriceTicker items={tickerItems} />
+      {/* Live Price Ticker */}
+      <PriceTicker />
 
       {/* Calculator */}
-      <ConverterCalculator
-        isOpen={showCalculator}
-        onClose={() => setShowCalculator(false)}
-        rates={rates}
-        language={language}
-      />
+      {showCalculator && (
+        <div className="bg-white dark:bg-gray-800 shadow-lg border-b-2 border-emerald-200 dark:border-emerald-700">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <Calculator size={24} className="text-emerald-600" />
+                {t.calculator}
+              </h2>
+              <button onClick={() => setShowCalculator(false)} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.amount}</label>
+                <input type="number" value={calcAmount} onChange={(e) => setCalcAmount(parseFloat(e.target.value) || 0)} className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.from}</label>
+                <select value={calcFrom} onChange={(e) => setCalcFrom(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                  <option value="dzd">DZD</option>
+                  <option value="eur">EUR</option>
+                  <option value="usd">USD</option>
+                  <option value="gbp">GBP</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.to}</label>
+                <select value={calcTo} onChange={(e) => setCalcTo(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                  <option value="dzd">DZD</option>
+                  <option value="eur">EUR</option>
+                  <option value="usd">USD</option>
+                  <option value="gbp">GBP</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.result}</label>
+                <div className="w-full px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 border-2 border-emerald-300 dark:border-emerald-600 rounded-lg font-bold text-emerald-800 dark:text-emerald-200 text-lg">
+                  {formatNumber(Number(calculateConversion().toFixed(2)))}
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">{t.estimate}</p>
+          </div>
+        </div>
+      )}
 
-      <main className="container mx-auto px-4 py-6">
-        {/* Search & Filters */}
-        <div className="bg-card rounded-2xl shadow-lg p-4 mb-6 border border-border">
+      <div className="container mx-auto px-4 py-6">
+        {/* Bank Cards */}
+        <div className="relative mb-6">
+          <div ref={scrollContainerRef} className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4">
+            <EnhancedBankCard
+              cardId="main"
+              title="E-Sekoir"
+              gradient="bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600"
+              cardNumber="2026 1600 0000 0001"
+              isMain={true}
+            />
+            <EnhancedBankCard
+              cardId="card2"
+              title="Green Plus"
+              gradient="bg-gradient-to-br from-green-400 via-green-500 to-emerald-600"
+              cardNumber="0000 0000 0000 0001"
+            />
+            <EnhancedBankCard
+              cardId="card3"
+              title="Gold"
+              gradient="bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-600"
+              cardNumber="0000 0000 0000 0002"
+            />
+            <EnhancedBankCard
+              cardId="card4"
+              title="Elite"
+              gradient="bg-gradient-to-br from-red-400 via-red-500 to-rose-600"
+              cardNumber="0000 0000 0000 0003"
+            />
+            <EnhancedBankCard
+              cardId="card5"
+              title="Blue Pro"
+              gradient="bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600"
+              cardNumber="0000 0000 0000 0004"
+            />
+          </div>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
+                placeholder={t.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.search}
-                className="w-full pr-10 pl-4 py-3 border-2 border-input rounded-xl focus:border-primary focus:outline-none bg-background text-foreground transition-colors"
+                className="w-full pr-10 pl-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:border-emerald-500 focus:outline-none text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700"
               />
             </div>
-
-            {/* Category Filter */}
             <div className="flex gap-2 flex-wrap">
-              {Object.entries(t.categories).map(([key, label]) => (
+              {Object.entries(t.categories).map(([key, value]) => (
                 <button
                   key={key}
                   onClick={() => setSelectedCategory(key)}
-                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${
-                    selectedCategory === key
-                      ? 'bg-primary text-primary-foreground shadow-lg'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  }`}
+                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${selectedCategory === key
+                    ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
                 >
-                  {label}
+                  {value}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Live Status */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <LiveIndicator />
-            <span className="text-sm text-muted-foreground">
-              {t.lastUpdate}: {lastUpdate.toLocaleTimeString()}
-            </span>
-          </div>
-          <button 
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-2 text-sm text-primary hover:underline"
-          >
-            <RefreshCw size={14} />
-            {language === 'ar' ? 'تحديث' : 'Refresh'}
-          </button>
+        {/* Items Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {getAllItems().map(item => renderItemCard(item))}
         </div>
 
-        {/* Currencies */}
-        {(selectedCategory === 'all' || selectedCategory === 'currency') && (
-          <section className="mb-8">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              💱 {t.categories.currency}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filterData(currencyBaseData, 'currency').map(currency => {
-                const priceData = livePrices[currency.id];
-                const official = priceData?.value || 150;
-                return (
-                  <CurrencyCard
-                    key={currency.id}
-                    id={currency.id}
-                    name={currency.name}
-                    symbol={currency.code}
-                    icon={currency.icon}
-                    official={official}
-                    squareBuy={getSquareBuyRate(official)}
-                    squareSell={getSquareSellRate(official)}
-                    change24h={(Math.random() - 0.5) * 4}
-                    direction={priceData?.direction || 'stable'}
-                    isFavorite={favorites.includes(currency.id)}
-                    onToggleFavorite={() => toggleFavorite(currency.id)}
-                    onDownload={() => handleDownload(currency)}
-                    language={language}
-                  />
-                );
-              })}
-            </div>
-          </section>
+        {getAllItems().length === 0 && (
+          <div className="text-center py-12">
+            <Search className="mx-auto mb-4 text-gray-400" size={48} />
+            <h3 className="text-xl font-bold text-gray-600 dark:text-gray-400">{t.noResults}</h3>
+            <p className="text-gray-500 dark:text-gray-500">{t.tryAgain}</p>
+          </div>
         )}
 
-        {/* Crypto */}
-        {(selectedCategory === 'all' || selectedCategory === 'crypto') && (
-          <section className="mb-8">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              ₿ {t.categories.crypto}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {filterData(cryptoData, 'crypto').map(crypto => (
-                <CryptoCard
-                  key={crypto.id}
-                  name={crypto.name}
-                  symbol={crypto.symbol}
-                  icon={crypto.icon}
-                  priceUSD={crypto.priceUSD}
-                  priceDZD={crypto.priceDZD}
-                  change24h={crypto.change24h}
-                  direction={crypto.change24h >= 0 ? 'up' : 'down'}
-                  isFavorite={favorites.includes(crypto.id)}
-                  onToggleFavorite={() => toggleFavorite(crypto.id)}
-                  language={language}
-                />
-              ))}
+        {/* Price Explanation Note */}
+        <div className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-900/30 dark:to-emerald-900/30 rounded-xl p-6 border border-blue-200 dark:border-blue-700">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <Info size={20} className="text-blue-600" />
+            {t.priceExplanation}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="space-y-2">
+              <p className="text-gray-700 dark:text-gray-300">• {t.priceStep1}</p>
+              <p className="text-gray-700 dark:text-gray-300">• {t.priceStep2}</p>
+              <p className="text-gray-700 dark:text-gray-300">• {t.priceStep3}</p>
             </div>
-          </section>
-        )}
-
-        {/* Gold */}
-        {(selectedCategory === 'all' || selectedCategory === 'gold') && (
-          <section className="mb-8">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              🥇 {t.categories.gold}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {filterData(goldData, 'gold').map(gold => (
-                <GoldCard
-                  key={gold.id}
-                  name={gold.name}
-                  symbol={gold.symbol}
-                  icon={gold.icon}
-                  buyPrice={gold.buyPrice}
-                  change24h={gold.change24h}
-                  direction={gold.change24h >= 0 ? 'up' : 'down'}
-                  isFavorite={favorites.includes(gold.id)}
-                  onToggleFavorite={() => toggleFavorite(gold.id)}
-                  onDownload={() => handleDownload(gold)}
-                  language={language}
-                />
-              ))}
+            <div className="space-y-2">
+              <p className="text-gray-700 dark:text-gray-300">• {t.priceStep4}</p>
+              <p className="text-gray-700 dark:text-gray-300">• {t.priceStep5}</p>
+              <p className="text-blue-600 dark:text-blue-400 font-semibold">• {t.apiSource}</p>
             </div>
-          </section>
-        )}
-
-        {/* Transfer */}
-        {(selectedCategory === 'all' || selectedCategory === 'transfer') && (
-          <section className="mb-8">
-            <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-              💳 {t.categories.transfer}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {filterData(transferData, 'transfer').map(transfer => (
-                <TransferCard
-                  key={transfer.id}
-                  name={transfer.name}
-                  symbol={transfer.symbol}
-                  icon={transfer.icon}
-                  buyPrice={transfer.buyPrice}
-                  sellPrice={transfer.sellPrice}
-                  fees={transfer.fees}
-                  speed={transfer.speed}
-                  rating={transfer.rating}
-                  direction="stable"
-                  isFavorite={favorites.includes(transfer.id)}
-                  onToggleFavorite={() => toggleFavorite(transfer.id)}
-                  language={language}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
+          </div>
+          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <strong>{t.importantNote}</strong> {t.noteText}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Footer */}
-      <footer className="bg-secondary text-secondary-foreground py-6 mt-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="font-bold text-lg">💱 E-Sekoir</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {language === 'ar' ? 'منصة الصرف الشاملة - الجزائر' : 'Complete Exchange Platform - Algeria'}
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            © 2024 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}
-          </p>
+      <footer className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-8 mt-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <DollarSign size={24} />
+              <span className="text-xl font-bold">E-Sekoir</span>
+            </div>
+            <p className="text-gray-400 text-sm mb-4">{t.subtitle}</p>
+            <p className="text-gray-500 text-xs">© 2024 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
+          </div>
         </div>
       </footer>
     </div>
