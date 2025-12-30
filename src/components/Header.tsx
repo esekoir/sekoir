@@ -1,7 +1,9 @@
 import React from 'react';
-import { DollarSign, Moon, Sun, Calculator } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { DollarSign, Moon, Sun, Calculator, Shield } from 'lucide-react';
 import { LiveClock } from './LiveClock';
 import { LiveIndicator } from './LiveIndicator';
+import { useAdmin } from '@/hooks/useAdmin';
 
 interface HeaderProps {
   language: 'ar' | 'en';
@@ -18,6 +20,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleDarkMode,
   onToggleCalculator,
 }) => {
+  const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
+  
   const t = {
     title: 'E-Sekoir',
     subtitle: language === 'ar' ? 'منصة الصرف الشاملة' : 'Complete Exchange Platform',
@@ -67,6 +72,16 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Calculator size={20} />
             </button>
+            
+            {isAdmin && (
+              <button 
+                onClick={() => navigate('/admin')}
+                className="bg-yellow-500/30 p-2 rounded-lg hover:bg-yellow-500/50 transition-all hover:scale-105"
+                aria-label="Admin Panel"
+              >
+                <Shield size={20} />
+              </button>
+            )}
           </div>
         </div>
       </div>
