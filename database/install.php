@@ -13,9 +13,9 @@
 // ============= DATABASE CONFIGURATION =============
 $config = [
     'host'     => 'localhost',
-    'dbname'   => 'your_database_name',
-    'username' => 'your_username',
-    'password' => 'your_password',
+    'dbname'   => 'u752343995_caba',
+    'username' => 'u752343995_dz',
+    'password' => 'Www.057890.dzd',
     'charset'  => 'utf8mb4'
 ];
 
