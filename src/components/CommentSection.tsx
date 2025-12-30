@@ -58,42 +58,68 @@ const CommentSection: React.FC<CommentSectionProps> = ({ currencyCode, language 
   }, [currencyCode, isExpanded, user]);
 
   const fetchComments = async () => {
+    // Fetch main comments
     const { data, error } = await supabase
       .from('comments')
-      .select(`
-        *,
-        profile:profiles!comments_user_id_fkey (
-          full_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('currency_code', currencyCode)
       .is('parent_id', null)
       .order('created_at', { ascending: false })
       .limit(20);
 
     if (!error && data) {
+      // Get all unique user_ids
+      const userIds = data.filter(c => c.user_id).map(c => c.user_id);
+      
+      // Fetch profiles for those users
+      let profilesMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .in('user_id', userIds);
+        
+        if (profiles) {
+          profilesMap = profiles.reduce((acc, p) => {
+            acc[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+            return acc;
+          }, {} as Record<string, { full_name: string | null; avatar_url: string | null }>);
+        }
+      }
+
       // Fetch replies for each comment
       const commentsWithReplies = await Promise.all(
         data.map(async (comment) => {
           const { data: replies } = await supabase
             .from('comments')
-            .select(`
-              *,
-              profile:profiles!comments_user_id_fkey (
-                full_name,
-                avatar_url
-              )
-            `)
+            .select('*')
             .eq('parent_id', comment.id)
             .order('created_at', { ascending: true });
 
+          // Get reply user_ids
+          const replyUserIds = (replies || []).filter(r => r.user_id).map(r => r.user_id);
+          let replyProfilesMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+          
+          if (replyUserIds.length > 0) {
+            const { data: replyProfiles } = await supabase
+              .from('profiles')
+              .select('user_id, full_name, avatar_url')
+              .in('user_id', replyUserIds);
+            
+            if (replyProfiles) {
+              replyProfilesMap = replyProfiles.reduce((acc, p) => {
+                acc[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+                return acc;
+              }, {} as Record<string, { full_name: string | null; avatar_url: string | null }>);
+            }
+          }
+
           return {
             ...comment,
-            profile: Array.isArray(comment.profile) ? comment.profile[0] : comment.profile,
+            profile: comment.user_id ? profilesMap[comment.user_id] : undefined,
             replies: (replies || []).map((r: any) => ({
               ...r,
-              profile: Array.isArray(r.profile) ? r.profile[0] : r.profile
+              profile: r.user_id ? replyProfilesMap[r.user_id] : undefined
             }))
           };
         })
