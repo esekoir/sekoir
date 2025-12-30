@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, TrendingDown, RefreshCw, Download, Search, X, Info, 
   Star, DollarSign, Heart, Calculator, CreditCard, Save, Shield, 
-  Zap, Award, Moon, Sun 
+  Zap, Award, Moon, Sun, Chrome
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import html2canvas from 'html2canvas';
-import UserMenu from '@/components/UserMenu';
 import CommentSection from '@/components/CommentSection';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const { toast } = useToast();
@@ -24,6 +25,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<any>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Card System State
   const [registered, setRegistered] = useState(false);
@@ -183,17 +186,48 @@ const Index = () => {
 
   const t = translations[language];
 
-  // Load user data
+  // Load user data from Supabase Auth
   useEffect(() => {
-    const stored = localStorage.getItem("userData");
-    if (stored) {
-      const data = JSON.parse(stored);
-      setGlobalName(data.fullname);
-      setBalanceAmount(data.balance || 0);
-      setRegistered(true);
-      setCurrentView('account');
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAuthUser(session?.user ?? null);
+      if (session?.user) {
+        setRegistered(true);
+        setCurrentView('account');
+        // Fetch profile
+        setTimeout(() => {
+          fetchUserProfile(session.user.id);
+        }, 0);
+      } else {
+        setRegistered(false);
+        setCurrentView('register');
+        setGlobalName('');
+        setBalanceAmount(0);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthUser(session?.user ?? null);
+      if (session?.user) {
+        setRegistered(true);
+        setCurrentView('account');
+        fetchUserProfile(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (data) {
+      setGlobalName(data.full_name || '');
+    }
+  };
 
   // Load dark mode preference
   useEffect(() => {
@@ -295,56 +329,99 @@ const Index = () => {
     setLoginError('');
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+    setAuthLoading(true);
 
     if (!/^[A-Za-zÀ-ÖØ-öø-ÿŒœ\s]+$/.test(formData.fullname)) {
-      setFormError('الاسم يجب أن يكون بالحروف الفرنسية');
+      setFormError(language === 'ar' ? 'الاسم يجب أن يكون بالحروف الفرنسية' : 'Name must be in French letters');
+      setAuthLoading(false);
       return;
     }
-    if (!/^\d{2}$/.test(formData.wilaya)) {
-      setFormError('رقم الولاية غير صحيح');
+    if (!formData.email || !formData.password) {
+      setFormError(language === 'ar' ? 'البريد وكلمة المرور مطلوبان' : 'Email and password required');
+      setAuthLoading(false);
       return;
     }
 
-    setGlobalName(formData.fullname);
-    setRegistered(true);
-    setBalanceAmount(0);
-    setCurrentView('account');
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: formData.fullname,
+            avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(formData.fullname)}`
+          }
+        }
+      });
 
-    localStorage.setItem("userData", JSON.stringify({
-      fullname: formData.fullname,
-      username: formData.username,
-      email: formData.email,
-      wilaya: formData.wilaya,
-      balance: 0
-    }));
-    
-    toast({
-      title: language === 'ar' ? 'تم التسجيل بنجاح!' : 'Registration Successful!',
-    });
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setFormError(language === 'ar' ? 'هذا البريد مسجل مسبقاً' : 'Email already registered');
+        } else {
+          setFormError(error.message);
+        }
+      } else {
+        setGlobalName(formData.fullname);
+        toast({
+          title: language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!',
+        });
+      }
+    } catch (error) {
+      setFormError(language === 'ar' ? 'حدث خطأ' : 'An error occurred');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const stored = localStorage.getItem("userData");
-    if (stored) {
-      const data = JSON.parse(stored);
-      if (data.username === loginData.loginUser || data.email === loginData.loginUser) {
-        setGlobalName(data.fullname);
-        setBalanceAmount(data.balance || 0);
-        setRegistered(true);
-        setCurrentView('account');
-        setLoginError('');
+    setLoginError('');
+    setAuthLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginData.loginUser,
+        password: loginData.loginPass
+      });
+
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          setLoginError(language === 'ar' ? 'البريد أو كلمة المرور غير صحيحة' : 'Invalid credentials');
+        } else {
+          setLoginError(error.message);
+        }
+      } else {
         toast({
           title: language === 'ar' ? 'مرحباً بك!' : 'Welcome back!',
         });
-      } else {
-        setLoginError(language === 'ar' ? 'اسم المستخدم أو كلمة المرور غير صحيحة' : 'Invalid credentials');
       }
-    } else {
-      setLoginError(language === 'ar' ? 'لا يوجد حساب مسجل' : 'No account found');
+    } catch (error) {
+      setLoginError(language === 'ar' ? 'حدث خطأ' : 'An error occurred');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setAuthLoading(true);
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? 'حدث خطأ' : 'An error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -353,23 +430,14 @@ const Index = () => {
     if (amount && !isNaN(Number(amount))) {
       const newBalance = balanceAmount + parseFloat(amount);
       setBalanceAmount(newBalance);
-
-      const stored = localStorage.getItem("userData");
-      if (stored) {
-        const data = JSON.parse(stored);
-        localStorage.setItem("userData", JSON.stringify({
-          ...data,
-          balance: newBalance
-        }));
-      }
-
       toast({
         title: `✅ ${language === 'ar' ? 'تم شحن' : 'Charged'} ${amount} €`,
       });
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setRegistered(false);
     setCurrentView('register');
     setGlobalName('');
@@ -377,7 +445,6 @@ const Index = () => {
     setFormData({ fullname: '', username: '', wilaya: '', email: '', password: '' });
     setLoginData({ loginUser: '', loginPass: '' });
     setFlippedCards({ main: false, card2: false, card3: false, card4: false, card5: false });
-    localStorage.removeItem("userData");
   };
 
   const getCardNumber = (wilaya: string = '16') => {
@@ -566,29 +633,6 @@ const Index = () => {
                       style={{ caretColor: 'auto' }}
                     />
 
-                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
-                    <input
-                      type="text"
-                      value={formData.username}
-                      onChange={(e) => handleFormChange('username', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
-                      required
-                      autoComplete="off"
-                      style={{ caretColor: 'auto' }}
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={formData.wilaya}
-                      onChange={(e) => handleFormChange('wilaya', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
-                      required
-                      autoComplete="off"
-                      style={{ caretColor: 'auto' }}
-                    />
-
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
                     <input
                       type="email"
@@ -613,9 +657,24 @@ const Index = () => {
 
                     {formError && <div className="text-red-300 text-xs">{formError}</div>}
 
-                    <button type="submit" className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold">
-                      {t.save}
+                    <button 
+                      type="submit" 
+                      disabled={authLoading}
+                      className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
+                    >
+                      {authLoading ? '...' : (language === 'ar' ? 'إنشاء حساب' : 'Create Account')}
                     </button>
+                    
+                    <button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      disabled={authLoading}
+                      className="w-full bg-white text-gray-800 py-2 rounded-lg font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Chrome size={16} />
+                      Google
+                    </button>
+                    
                     <button
                       type="button"
                       onClick={() => setCurrentView('login')}
@@ -628,9 +687,9 @@ const Index = () => {
 
                 {currentView === 'login' && (
                   <form onSubmit={handleLogin} className="space-y-2">
-                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
+                    <label className="block text-xs font-medium opacity-90">{t.email}</label>
                     <input
-                      type="text"
+                      type="email"
                       value={loginData.loginUser}
                       onChange={(e) => handleLoginChange('loginUser', e.target.value)}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
@@ -652,9 +711,24 @@ const Index = () => {
 
                     {loginError && <div className="text-red-300 text-xs">{loginError}</div>}
 
-                    <button type="submit" className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold">
-                      {t.login}
+                    <button 
+                      type="submit" 
+                      disabled={authLoading}
+                      className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
+                    >
+                      {authLoading ? '...' : t.login}
                     </button>
+                    
+                    <button
+                      type="button"
+                      onClick={handleGoogleLogin}
+                      disabled={authLoading}
+                      className="w-full bg-white text-gray-800 py-2 rounded-lg font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Chrome size={16} />
+                      Google
+                    </button>
+                    
                     <button
                       type="button"
                       onClick={() => setCurrentView('register')}
@@ -984,7 +1058,6 @@ const Index = () => {
               <button onClick={() => setShowCalculator(!showCalculator)} className="bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-all">
                 <Calculator size={20} />
               </button>
-              <UserMenu language={language} />
             </div>
           </div>
         </div>
