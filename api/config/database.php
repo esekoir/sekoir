@@ -10,8 +10,8 @@ define('DB_USER', 'your_username');
 define('DB_PASS', 'your_password');
 define('DB_CHARSET', 'utf8mb4');
 
-// JWT Secret Key - Change this to a random string!
-define('JWT_SECRET', 'your-secret-key-change-this-to-random-string');
+// JWT Secret Key
+define('JWT_SECRET', 'caba_dz_secure_jwt_key_2024_x7k9m2p5q8r1');
 
 // Site URL
 define('SITE_URL', 'https://yoursite.com');
