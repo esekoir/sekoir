@@ -31,8 +31,11 @@ const Index = () => {
   // Card System State
   const [registered, setRegistered] = useState(false);
   const [globalName, setGlobalName] = useState("");
+  const [userWilaya, setUserWilaya] = useState("");
+  const [memberNumber, setMemberNumber] = useState<number | null>(null);
   const [balanceAmount, setBalanceAmount] = useState(0);
   const [currentView, setCurrentView] = useState('register');
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [flippedCards, setFlippedCards] = useState({
     main: false,
     card2: false,
@@ -51,8 +54,14 @@ const Index = () => {
     loginUser: '',
     loginPass: ''
   });
+  const [completeProfileData, setCompleteProfileData] = useState({
+    fullname: '',
+    username: '',
+    wilaya: ''
+  });
   const [formError, setFormError] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [completeProfileError, setCompleteProfileError] = useState('');
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +123,8 @@ const Index = () => {
       edit: 'تعديل المعلومات',
       logout: 'تسجيل الخروج',
       backToRegister: 'رجوع للتسجيل',
+      completeProfile: 'أكمل بياناتك',
+      memberNumber: 'رقم العضوية',
       showLogin: 'تسجيل الدخول',
       upgradeCard: 'ترقية البطاقة',
       cardHolder: 'اسم الحامل',
@@ -176,6 +187,8 @@ const Index = () => {
       edit: 'Edit Info',
       logout: 'Logout',
       backToRegister: 'Back to Register',
+      completeProfile: 'Complete Profile',
+      memberNumber: 'Member #',
       showLogin: 'Login',
       upgradeCard: 'Upgrade Card',
       cardHolder: 'Card Holder',
@@ -191,9 +204,6 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setAuthUser(session?.user ?? null);
       if (session?.user) {
-        setRegistered(true);
-        setCurrentView('account');
-        // Fetch profile
         setTimeout(() => {
           fetchUserProfile(session.user.id);
         }, 0);
@@ -201,15 +211,16 @@ const Index = () => {
         setRegistered(false);
         setCurrentView('register');
         setGlobalName('');
+        setUserWilaya('');
+        setMemberNumber(null);
         setBalanceAmount(0);
+        setNeedsProfileCompletion(false);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthUser(session?.user ?? null);
       if (session?.user) {
-        setRegistered(true);
-        setCurrentView('account');
         fetchUserProfile(session.user.id);
       }
     });
@@ -225,7 +236,30 @@ const Index = () => {
       .maybeSingle();
     
     if (data) {
+      // Check if profile needs completion (missing wilaya or full_name)
+      if (!data.wilaya || !data.full_name) {
+        setNeedsProfileCompletion(true);
+        setCurrentView('completeProfile');
+        setFlippedCards(prev => ({ ...prev, main: true }));
+        // Pre-fill with any existing data
+        setCompleteProfileData({
+          fullname: data.full_name || '',
+          username: data.username || '',
+          wilaya: data.wilaya || ''
+        });
+      } else {
+        setNeedsProfileCompletion(false);
+        setRegistered(true);
+        setCurrentView('account');
+      }
       setGlobalName(data.full_name || '');
+      setUserWilaya(data.wilaya || '');
+      setMemberNumber(data.member_number || null);
+    } else {
+      // New user from Google - needs profile completion
+      setNeedsProfileCompletion(true);
+      setCurrentView('completeProfile');
+      setFlippedCards(prev => ({ ...prev, main: true }));
     }
   };
 
@@ -329,6 +363,11 @@ const Index = () => {
     setLoginError('');
   };
 
+  const handleCompleteProfileChange = (field: string, value: string) => {
+    setCompleteProfileData(prev => ({ ...prev, [field]: value }));
+    setCompleteProfileError('');
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -336,6 +375,11 @@ const Index = () => {
 
     if (!/^[A-Za-zÀ-ÖØ-öø-ÿŒœ\s]+$/.test(formData.fullname)) {
       setFormError(language === 'ar' ? 'الاسم يجب أن يكون بالحروف الفرنسية' : 'Name must be in French letters');
+      setAuthLoading(false);
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(formData.username) || formData.username.length < 3) {
+      setFormError(language === 'ar' ? 'اسم المستخدم غير صالح (3 أحرف على الأقل)' : 'Invalid username (min 3 chars)');
       setAuthLoading(false);
       return;
     }
@@ -358,6 +402,7 @@ const Index = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: formData.fullname,
+            username: formData.username,
             wilaya: formData.wilaya,
             avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(formData.fullname)}`
           }
@@ -371,9 +416,15 @@ const Index = () => {
           setFormError(error.message);
         }
       } else if (data.user) {
-        // Update profile with wilaya
-        await supabase.from('profiles').update({ wilaya: formData.wilaya }).eq('user_id', data.user.id);
+        // Update profile with username and wilaya
+        await supabase.from('profiles').update({ 
+          full_name: formData.fullname,
+          username: formData.username,
+          wilaya: formData.wilaya 
+        }).eq('user_id', data.user.id);
+        
         setGlobalName(formData.fullname);
+        setUserWilaya(formData.wilaya);
         toast({
           title: language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!',
         });
@@ -449,14 +500,97 @@ const Index = () => {
     setRegistered(false);
     setCurrentView('register');
     setGlobalName('');
+    setUserWilaya('');
+    setMemberNumber(null);
     setBalanceAmount(0);
+    setNeedsProfileCompletion(false);
     setFormData({ fullname: '', username: '', wilaya: '', email: '', password: '' });
     setLoginData({ loginUser: '', loginPass: '' });
+    setCompleteProfileData({ fullname: '', username: '', wilaya: '' });
     setFlippedCards({ main: false, card2: false, card3: false, card4: false, card5: false });
   };
 
-  const getCardNumber = (wilaya: string = '16') => {
-    return `2024 ${wilaya}00 0000 0001`;
+  // Handle complete profile for Google users
+  const handleCompleteProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCompleteProfileError('');
+    setAuthLoading(true);
+
+    if (!authUser) {
+      setCompleteProfileError(language === 'ar' ? 'خطأ في المصادقة' : 'Auth error');
+      setAuthLoading(false);
+      return;
+    }
+
+    if (!/^[A-Za-zÀ-ÖØ-öø-ÿŒœ\s]+$/.test(completeProfileData.fullname)) {
+      setCompleteProfileError(language === 'ar' ? 'الاسم يجب أن يكون بالحروف الفرنسية' : 'Name must be in French letters');
+      setAuthLoading(false);
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(completeProfileData.username) || completeProfileData.username.length < 3) {
+      setCompleteProfileError(language === 'ar' ? 'اسم المستخدم غير صالح (3 أحرف على الأقل)' : 'Invalid username (min 3 chars)');
+      setAuthLoading(false);
+      return;
+    }
+    if (!/^\d{2}$/.test(completeProfileData.wilaya)) {
+      setCompleteProfileError(language === 'ar' ? 'رقم الولاية غير صحيح (رقمين)' : 'Invalid wilaya (2 digits)');
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      // Check if username is taken
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', completeProfileData.username)
+        .neq('user_id', authUser.id)
+        .maybeSingle();
+
+      if (existingUser) {
+        setCompleteProfileError(language === 'ar' ? 'اسم المستخدم مستخدم بالفعل' : 'Username already taken');
+        setAuthLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.from('profiles').upsert({
+        user_id: authUser.id,
+        full_name: completeProfileData.fullname,
+        username: completeProfileData.username,
+        wilaya: completeProfileData.wilaya,
+        avatar_url: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(completeProfileData.fullname)}`
+      }, { onConflict: 'user_id' });
+
+      if (error) {
+        if (error.message.includes('duplicate key') && error.message.includes('username')) {
+          setCompleteProfileError(language === 'ar' ? 'اسم المستخدم مستخدم بالفعل' : 'Username already taken');
+        } else {
+          setCompleteProfileError(error.message);
+        }
+      } else {
+        setGlobalName(completeProfileData.fullname);
+        setUserWilaya(completeProfileData.wilaya);
+        setNeedsProfileCompletion(false);
+        setRegistered(true);
+        setCurrentView('account');
+        // Refetch to get member_number
+        fetchUserProfile(authUser.id);
+        toast({
+          title: language === 'ar' ? 'تم حفظ البيانات بنجاح!' : 'Profile saved successfully!',
+        });
+      }
+    } catch (error) {
+      setCompleteProfileError(language === 'ar' ? 'حدث خطأ' : 'An error occurred');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const getCardNumber = (wilaya: string = '16', memNum: number | null = null) => {
+    const year = new Date().getFullYear();
+    const wilayaFormatted = wilaya.padStart(2, '0');
+    const memberFormatted = memNum ? memNum.toString().padStart(4, '0') : '0001';
+    return `${year} ${wilayaFormatted}00 0000 ${memberFormatted}`;
   };
 
   const formatNumber = (num: number) => {
@@ -581,10 +715,8 @@ const Index = () => {
     isMain?: boolean;
   }) => {
     const isFlipped = flippedCards[cardId as keyof typeof flippedCards];
-    const stored = localStorage.getItem("userData");
-    const userData = stored ? JSON.parse(stored) : null;
     const displayName = registered && globalName ? globalName.toUpperCase() : 'E-SEKOIR USER';
-    const displayCardNumber = registered && userData?.wilaya ? getCardNumber(userData.wilaya) : cardNumber;
+    const displayCardNumber = registered && userWilaya ? getCardNumber(userWilaya, memberNumber) : cardNumber;
 
     const handleCardClick = () => {
       if (isMain) {
@@ -639,6 +771,18 @@ const Index = () => {
                       required
                       autoComplete="off"
                       style={{ caretColor: 'auto' }}
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => handleFormChange('username', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
+                      required
+                      autoComplete="off"
+                      style={{ caretColor: 'auto' }}
+                      placeholder="user123"
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
@@ -760,9 +904,72 @@ const Index = () => {
                   </form>
                 )}
 
+                {currentView === 'completeProfile' && (
+                  <form onSubmit={handleCompleteProfile} className="space-y-2">
+                    <div className="text-center mb-2">
+                      <h3 className="text-sm font-bold">{t.completeProfile}</h3>
+                    </div>
+                    
+                    <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
+                    <input
+                      type="text"
+                      value={completeProfileData.fullname}
+                      onChange={(e) => handleCompleteProfileChange('fullname', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
+                      required
+                      autoComplete="off"
+                      style={{ caretColor: 'auto' }}
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
+                    <input
+                      type="text"
+                      value={completeProfileData.username}
+                      onChange={(e) => handleCompleteProfileChange('username', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
+                      required
+                      autoComplete="off"
+                      style={{ caretColor: 'auto' }}
+                      placeholder="user123"
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
+                    <input
+                      type="text"
+                      maxLength={2}
+                      value={completeProfileData.wilaya}
+                      onChange={(e) => handleCompleteProfileChange('wilaya', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
+                      required
+                      autoComplete="off"
+                      style={{ caretColor: 'auto' }}
+                      placeholder="16"
+                    />
+
+                    {completeProfileError && <div className="text-red-300 text-xs">{completeProfileError}</div>}
+
+                    <button 
+                      type="submit" 
+                      disabled={authLoading}
+                      className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
+                    >
+                      {authLoading ? '...' : t.save}
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full bg-gradient-to-r from-red-500 to-red-400 text-white py-2 rounded-lg font-bold"
+                    >
+                      {t.logout}
+                    </button>
+                  </form>
+                )}
+
                 {currentView === 'account' && (
                   <div className="text-center space-y-3">
                     <h3 className="text-lg font-bold">{globalName}</h3>
+                    <div className="text-xs opacity-80">{t.memberNumber}: {memberNumber || '-'}</div>
                     <div className="text-sm opacity-90">{t.balance}</div>
                     <div className="text-3xl font-bold">{balanceAmount.toFixed(2)} €</div>
 
@@ -771,12 +978,6 @@ const Index = () => {
                       className="w-full bg-gradient-to-r from-yellow-400 to-yellow-300 text-gray-900 py-2 rounded-lg font-bold"
                     >
                       {t.charge}
-                    </button>
-                    <button
-                      onClick={() => setCurrentView('register')}
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
-                    >
-                      {t.edit}
                     </button>
                     <button
                       onClick={handleLogout}

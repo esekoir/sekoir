@@ -79,8 +79,10 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          member_number: number
           updated_at: string
           user_id: string
+          username: string | null
           wilaya: string | null
         }
         Insert: {
@@ -88,8 +90,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          member_number?: number
           updated_at?: string
           user_id: string
+          username?: string | null
           wilaya?: string | null
         }
         Update: {
@@ -97,8 +101,10 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          member_number?: number
           updated_at?: string
           user_id?: string
+          username?: string | null
           wilaya?: string | null
         }
         Relationships: []
