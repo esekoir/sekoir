@@ -1,9 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { DollarSign, Moon, Sun, Calculator, Shield } from 'lucide-react';
 import { LiveClock } from './LiveClock';
 import { LiveIndicator } from './LiveIndicator';
 import { useAdmin } from '@/hooks/useAdmin';
+import { AdminPanel } from './AdminPanel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface HeaderProps {
   language: 'ar' | 'en';
@@ -20,7 +21,6 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleDarkMode,
   onToggleCalculator,
 }) => {
-  const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   
   const t = {
@@ -74,13 +74,25 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             
             {isAdmin && (
-              <button 
-                onClick={() => navigate('/admin')}
-                className="bg-yellow-500/30 p-2 rounded-lg hover:bg-yellow-500/50 transition-all hover:scale-105"
-                aria-label="Admin Panel"
-              >
-                <Shield size={20} />
-              </button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button 
+                    className="bg-yellow-500/30 p-2 rounded-lg hover:bg-yellow-500/50 transition-all hover:scale-105"
+                    aria-label="Admin Panel"
+                  >
+                    <Shield size={20} />
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-xl">
+                      <Shield className="h-5 w-5" />
+                      لوحة التحكم
+                    </DialogTitle>
+                  </DialogHeader>
+                  <AdminPanel />
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         </div>
