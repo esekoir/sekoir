@@ -14,24 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
-      comment_likes: {
+      comment_dislikes: {
         Row: {
           comment_id: string
           created_at: string
+          guest_id: string | null
           id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           comment_id: string
           created_at?: string
+          guest_id?: string | null
           id?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           comment_id?: string
           created_at?: string
+          guest_id?: string | null
           id?: string
-          user_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_dislikes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          guest_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -48,30 +83,50 @@ export type Database = {
           content: string
           created_at: string
           currency_code: string
+          dislikes_count: number
+          guest_name: string | null
           id: string
+          is_guest: boolean
           likes_count: number
+          parent_id: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           content: string
           created_at?: string
           currency_code: string
+          dislikes_count?: number
+          guest_name?: string | null
           id?: string
+          is_guest?: boolean
           likes_count?: number
+          parent_id?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           content?: string
           created_at?: string
           currency_code?: string
+          dislikes_count?: number
+          guest_name?: string | null
           id?: string
+          is_guest?: boolean
           likes_count?: number
+          parent_id?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
