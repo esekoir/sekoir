@@ -339,6 +339,11 @@ const Index = () => {
       setAuthLoading(false);
       return;
     }
+    if (!/^\d{2}$/.test(formData.wilaya)) {
+      setFormError(language === 'ar' ? 'رقم الولاية غير صحيح (رقمين)' : 'Invalid wilaya (2 digits)');
+      setAuthLoading(false);
+      return;
+    }
     if (!formData.email || !formData.password) {
       setFormError(language === 'ar' ? 'البريد وكلمة المرور مطلوبان' : 'Email and password required');
       setAuthLoading(false);
@@ -346,13 +351,14 @@ const Index = () => {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: formData.fullname,
+            wilaya: formData.wilaya,
             avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(formData.fullname)}`
           }
         }
@@ -364,7 +370,9 @@ const Index = () => {
         } else {
           setFormError(error.message);
         }
-      } else {
+      } else if (data.user) {
+        // Update profile with wilaya
+        await supabase.from('profiles').update({ wilaya: formData.wilaya }).eq('user_id', data.user.id);
         setGlobalName(formData.fullname);
         toast({
           title: language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!',
@@ -631,6 +639,19 @@ const Index = () => {
                       required
                       autoComplete="off"
                       style={{ caretColor: 'auto' }}
+                    />
+
+                    <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
+                    <input
+                      type="text"
+                      maxLength={2}
+                      value={formData.wilaya}
+                      onChange={(e) => handleFormChange('wilaya', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
+                      required
+                      autoComplete="off"
+                      style={{ caretColor: 'auto' }}
+                      placeholder="16"
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
