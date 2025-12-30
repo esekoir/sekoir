@@ -7,6 +7,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import html2canvas from 'html2canvas';
+import UserMenu from '@/components/UserMenu';
+import CommentSection from '@/components/CommentSection';
 
 const Index = () => {
   const { toast } = useToast();
@@ -794,6 +796,7 @@ const Index = () => {
                 {Math.abs(item.change24h)}%
               </span>
             </div>
+            <CommentSection currencyCode={item.id} language={language} />
           </div>
         </div>
       );
@@ -837,6 +840,7 @@ const Index = () => {
                 {Math.abs(item.change24h)}%
               </span>
             </div>
+            <CommentSection currencyCode={item.id} language={language} />
           </div>
         </div>
       );
@@ -876,6 +880,7 @@ const Index = () => {
               {Math.abs(item.change24h)}%
             </span>
           </div>
+          <CommentSection currencyCode={item.id} language={language} />
         </div>
       );
     } else if (item.category === 'transfer') {
@@ -928,6 +933,7 @@ const Index = () => {
                 <span className="font-bold">{item.rating}</span>
               </div>
             </div>
+            <CommentSection currencyCode={item.id} language={language} />
           </div>
         </div>
       );
@@ -978,6 +984,7 @@ const Index = () => {
               <button onClick={() => setShowCalculator(!showCalculator)} className="bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-all">
                 <Calculator size={20} />
               </button>
+              <UserMenu language={language} />
             </div>
           </div>
         </div>
