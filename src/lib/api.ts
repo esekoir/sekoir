@@ -1,5 +1,5 @@
 // API Configuration - Change this to your hosting URL
-const API_BASE_URL = '/api'; // e.g., 'https://yourdomain.com/api'
+const API_BASE_URL = 'https://caba-dz.com/api'; // Your hosting URL
 
 // Token management
 const getToken = () => localStorage.getItem('auth_token');
