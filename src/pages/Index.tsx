@@ -623,7 +623,7 @@ const Index = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <img src={getCurrencyIcon(currency.id)} alt={currency.symbol} className="w-8 h-8" />
+            {getCurrencyIcon(currency.id, "w-8 h-8")}
           </div>
           <div>
             <h3 className="font-bold text-foreground">{currency.name}</h3>
@@ -676,7 +676,7 @@ const Index = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <img src={getCurrencyIcon(crypto.id)} alt={crypto.symbol} className="w-8 h-8" />
+            {getCurrencyIcon(crypto.id, "w-8 h-8")}
           </div>
           <div>
             <h3 className="font-bold text-foreground">{crypto.name}</h3>
@@ -723,7 +723,7 @@ const Index = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-amber-500/20 to-yellow-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <img src={getCurrencyIcon(gold.id)} alt={gold.symbol} className="w-8 h-8" />
+            {getCurrencyIcon(gold.id, "w-8 h-8")}
           </div>
           <div>
             <h3 className="font-bold text-foreground">{gold.name}</h3>
@@ -766,7 +766,7 @@ const Index = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <img src={getCurrencyIcon(transfer.id)} alt={transfer.name} className="w-8 h-8" />
+            {getCurrencyIcon(transfer.id, "w-8 h-8")}
           </div>
           <div>
             <h3 className="font-bold text-foreground">{transfer.name}</h3>
