@@ -5,13 +5,13 @@
  */
 
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'u752343995_caba');
-define('DB_USER', 'u752343995_dz');
-define('DB_PASS', 'Www.057890.dzd');
+define('DB_NAME', 'your_database_name');
+define('DB_USER', 'your_username');
+define('DB_PASS', 'your_password');
 define('DB_CHARSET', 'utf8mb4');
 
-// JWT Secret Key
-define('JWT_SECRET', 'caba_dz_secure_jwt_key_2024_x7k9m2p5q8r1');
+// JWT Secret Key - Change this to a random string!
+define('JWT_SECRET', 'your-secret-key-change-this-to-random-string');
 
 // Site URL
 define('SITE_URL', 'https://yoursite.com');

@@ -2,8 +2,8 @@ import React from 'react';
 import { DollarSign, Moon, Sun, Calculator, Shield } from 'lucide-react';
 import { LiveClock } from './LiveClock';
 import { LiveIndicator } from './LiveIndicator';
-import { useAdminPHP } from '@/hooks/useAdminPHP';
-import { AdminPanelPHP } from './AdminPanelPHP';
+import { useAdmin } from '@/hooks/useAdmin';
+import { AdminPanel } from './AdminPanel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface HeaderProps {
@@ -21,7 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleDarkMode,
   onToggleCalculator,
 }) => {
-  const { isAdmin } = useAdminPHP();
+  const { isAdmin } = useAdmin();
   
   const t = {
     title: 'E-Sekoir',
@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
                       لوحة التحكم
                     </DialogTitle>
                   </DialogHeader>
-                  <AdminPanelPHP />
+                  <AdminPanel />
                 </DialogContent>
               </Dialog>
             )}
