@@ -47,23 +47,39 @@ function getDB() {
 }
 
 /**
- * Set CORS Headers
+ * Set CORS Headers with Enhanced Security
  */
 function setCORSHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     
-    if (in_array($origin, ALLOWED_ORIGINS)) {
+    // Validate origin against whitelist
+    if (!empty($origin) && in_array($origin, ALLOWED_ORIGINS)) {
         header("Access-Control-Allow-Origin: $origin");
+        header("Vary: Origin");
+    } else if (empty($origin)) {
+        // Allow same-origin requests (no Origin header)
+        header("Access-Control-Allow-Origin: " . SITE_URL);
+    } else {
+        // Block unauthorized origins
+        http_response_code(403);
+        die(json_encode(['error' => 'Origin not allowed', 'origin' => $origin]));
     }
     
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
     header("Access-Control-Allow-Credentials: true");
+    header("Access-Control-Max-Age: 86400"); // Cache preflight for 24 hours
     header("Content-Type: application/json; charset=utf-8");
     
-    // Handle preflight
+    // Security headers
+    header("X-Content-Type-Options: nosniff");
+    header("X-Frame-Options: DENY");
+    header("X-XSS-Protection: 1; mode=block");
+    header("Referrer-Policy: strict-origin-when-cross-origin");
+    
+    // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(200);
+        http_response_code(204); // No Content
         exit();
     }
 }
