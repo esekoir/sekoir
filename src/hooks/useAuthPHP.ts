@@ -17,11 +17,7 @@ export const useAuthPHP = () => {
     try {
       const data = await authApi.getMe();
       setUser(data.user);
-      
-      if (data.user?.id) {
-        const profileData = await profilesApi.getProfile(data.user.id);
-        setProfile(profileData.profile || null);
-      }
+      setProfile(data.profile || null);
     } catch (error) {
       console.error('Auth error:', error);
       authApi.logout();

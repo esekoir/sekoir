@@ -38,12 +38,12 @@ export const authApi = {
     username: string;
     wilaya: string;
   }) => {
-    const result = await request('/auth/register.php', {
+  const result = await request('/auth/register.php', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    if (result.token) {
-      setToken(result.token);
+    if (result.access_token) {
+      setToken(result.access_token);
     }
     return result;
   },
@@ -53,8 +53,8 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    if (result.token) {
-      setToken(result.token);
+    if (result.access_token) {
+      setToken(result.access_token);
     }
     return result;
   },
