@@ -14,11 +14,12 @@ define('DB_CHARSET', 'utf8mb4');
 define('JWT_SECRET', 'your-secret-key-change-this-to-random-string');
 
 // Site URL
-define('SITE_URL', 'https://yoursite.com');
+define('SITE_URL', 'https://caba-dz.com');
 
 // CORS Settings
 define('ALLOWED_ORIGINS', [
-    'https://yoursite.com',
+    'https://caba-dz.com',
+    'https://www.caba-dz.com',
     'http://localhost:5173',
     'http://localhost:3000'
 ]);
