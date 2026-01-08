@@ -4,14 +4,18 @@
  * Update these values with your hosting credentials
  */
 
+// ============ أدخل بيانات قاعدة البيانات هنا ============
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'your_database_name');
-define('DB_USER', 'your_username');
-define('DB_PASS', 'your_password');
+define('DB_NAME', 'u752343995_caba');      // اسم قاعدة البيانات
+define('DB_USER', 'u752343995_dz');        // اسم المستخدم
+define('DB_PASS', 'YOUR_DB_PASSWORD');     // ← أدخل كلمة مرور قاعدة البيانات هنا
 define('DB_CHARSET', 'utf8mb4');
 
-// JWT Secret Key - Change this to a random string!
-define('JWT_SECRET', 'your-secret-key-change-this-to-random-string');
+// ============ مفتاح JWT - غيّره لنص عشوائي طويل ============
+define('JWT_SECRET', 'YOUR_JWT_SECRET_KEY');  // ← أدخل مفتاح سري طويل وعشوائي
+
+// ============ Google OAuth - اختياري ============
+define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');  // ← أدخل Google Client ID هنا
 
 // Site URL
 define('SITE_URL', 'https://caba-dz.com');
