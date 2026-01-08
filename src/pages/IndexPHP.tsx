@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, TrendingDown, RefreshCw, Download, Search, X, Info, 
   Star, DollarSign, Heart, Calculator, CreditCard, Save, Shield, 
-  Zap, Award, Moon, Sun, Chrome
+  Zap, Award, Moon, Sun, Chrome, User
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
@@ -675,8 +675,11 @@ const IndexPHP = () => {
                       type="text"
                       value={formData.fullname}
                       onChange={(e) => handleFormChange('fullname', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoFocus
+                      tabIndex={1}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.username}</label>
@@ -684,9 +687,11 @@ const IndexPHP = () => {
                       type="text"
                       value={formData.username}
                       onChange={(e) => handleFormChange('username', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
                       placeholder="user123"
+                      tabIndex={2}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
@@ -694,10 +699,15 @@ const IndexPHP = () => {
                       type="text"
                       maxLength={2}
                       value={formData.wilaya}
-                      onChange={(e) => handleFormChange('wilaya', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        handleFormChange('wilaya', val);
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
                       placeholder="16"
+                      tabIndex={3}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
@@ -705,8 +715,10 @@ const IndexPHP = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleFormChange('email', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      tabIndex={4}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
@@ -714,8 +726,9 @@ const IndexPHP = () => {
                       type="password"
                       value={formData.password}
                       onChange={(e) => handleFormChange('password', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      tabIndex={5}
                     />
 
                     {formError && <div className="text-red-300 text-xs">{formError}</div>}
@@ -724,6 +737,7 @@ const IndexPHP = () => {
                       type="submit" 
                       disabled={authLoading}
                       className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
+                      tabIndex={6}
                     >
                       {authLoading ? '...' : (language === 'ar' ? 'إنشاء حساب' : 'Create Account')}
                     </button>
@@ -732,6 +746,7 @@ const IndexPHP = () => {
                       type="button"
                       onClick={() => setCurrentView('login')}
                       className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
+                      tabIndex={7}
                     >
                       {t.showLogin}
                     </button>
@@ -745,8 +760,11 @@ const IndexPHP = () => {
                       type="email"
                       value={loginData.loginUser}
                       onChange={(e) => handleLoginChange('loginUser', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoFocus
+                      tabIndex={1}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
@@ -754,8 +772,9 @@ const IndexPHP = () => {
                       type="password"
                       value={loginData.loginPass}
                       onChange={(e) => handleLoginChange('loginPass', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      tabIndex={2}
                     />
 
                     {loginError && <div className="text-red-300 text-xs">{loginError}</div>}
@@ -764,6 +783,7 @@ const IndexPHP = () => {
                       type="submit" 
                       disabled={authLoading}
                       className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
+                      tabIndex={3}
                     >
                       {authLoading ? '...' : t.login}
                     </button>
@@ -772,6 +792,7 @@ const IndexPHP = () => {
                       type="button"
                       onClick={() => setCurrentView('register')}
                       className="w-full bg-gradient-to-r from-gray-500 to-gray-400 text-white py-2 rounded-lg font-bold"
+                      tabIndex={4}
                     >
                       {t.backToRegister}
                     </button>
@@ -789,8 +810,11 @@ const IndexPHP = () => {
                       type="text"
                       value={completeProfileData.fullname}
                       onChange={(e) => handleCompleteProfileChange('fullname', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoFocus
+                      tabIndex={1}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.username}</label>
@@ -798,9 +822,11 @@ const IndexPHP = () => {
                       type="text"
                       value={completeProfileData.username}
                       onChange={(e) => handleCompleteProfileChange('username', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
                       placeholder="user123"
+                      tabIndex={2}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
@@ -808,10 +834,15 @@ const IndexPHP = () => {
                       type="text"
                       maxLength={2}
                       value={completeProfileData.wilaya}
-                      onChange={(e) => handleCompleteProfileChange('wilaya', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        handleCompleteProfileChange('wilaya', val);
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
                       placeholder="16"
+                      tabIndex={3}
                     />
 
                     {completeProfileError && <div className="text-red-300 text-xs">{completeProfileError}</div>}
@@ -820,6 +851,7 @@ const IndexPHP = () => {
                       type="submit" 
                       disabled={authLoading}
                       className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
+                      tabIndex={4}
                     >
                       {authLoading ? '...' : t.save}
                     </button>
@@ -828,21 +860,76 @@ const IndexPHP = () => {
 
                 {currentView === 'account' && (
                   <div className="space-y-3">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{globalName.toUpperCase()}</div>
-                      <div className="text-sm opacity-80">{t.memberNumber}: {memberNumber || '---'}</div>
+                    {/* صورة المستخدم */}
+                    <div className="flex flex-col items-center">
+                      <div className="relative">
+                        {profile?.avatar_url ? (
+                          <img 
+                            src={profile.avatar_url} 
+                            alt="Profile" 
+                            className="w-16 h-16 rounded-full object-cover border-2 border-white/50"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/50">
+                            <User size={28} className="text-white/80" />
+                          </div>
+                        )}
+                        <label className="absolute -bottom-1 -right-1 bg-blue-500 hover:bg-blue-600 rounded-full p-1.5 cursor-pointer transition-colors">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden"
+                            onChange={(e) => {
+                              toast({
+                                title: language === 'ar' ? 'سيكون متوفراً قريباً' : 'Coming soon',
+                              });
+                            }}
+                          />
+                          <CreditCard size={12} className="text-white" />
+                        </label>
+                      </div>
                     </div>
-                    <div className="bg-white/20 rounded-lg p-3">
+
+                    {/* معلومات بطاقة الهوية */}
+                    <div className="bg-white/10 rounded-lg p-3 space-y-2">
+                      <div className="flex justify-between items-center border-b border-white/20 pb-2">
+                        <span className="text-xs opacity-70">{language === 'ar' ? 'الاسم الكامل' : 'Full Name'}</span>
+                        <span className="text-sm font-bold">{globalName.toUpperCase()}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-white/20 pb-2">
+                        <span className="text-xs opacity-70">{language === 'ar' ? 'اسم المستخدم' : 'Username'}</span>
+                        <span className="text-sm font-bold">@{profile?.username || '---'}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-white/20 pb-2">
+                        <span className="text-xs opacity-70">{language === 'ar' ? 'الولاية' : 'Wilaya'}</span>
+                        <span className="text-sm font-bold">{userWilaya}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs opacity-70">{t.memberNumber}</span>
+                        <span className="text-sm font-bold">{memberNumber || '---'}</span>
+                      </div>
+                    </div>
+
+                    {/* الرصيد */}
+                    <div className="bg-gradient-to-r from-green-500/30 to-emerald-500/30 rounded-lg p-3">
                       <div className="text-xs opacity-80">{t.balance}</div>
                       <div className="text-2xl font-bold">{balanceAmount.toFixed(2)} €</div>
                     </div>
+
+                    {/* زر الشحن */}
                     <button 
-                      onClick={handleCharge}
+                      onClick={() => {
+                        toast({
+                          title: language === 'ar' ? '⏳ سيكون متوفراً قريباً' : '⏳ Coming soon',
+                        });
+                      }}
                       className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
                     >
                       <Zap size={16} />
                       {t.charge}
                     </button>
+
+                    {/* زر الخروج */}
                     <button 
                       onClick={handleLogout}
                       className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-2 rounded-lg font-bold"
