@@ -673,12 +673,13 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
                     <input
                       type="text"
+                      id="register-fullname"
+                      name="fullname"
                       value={formData.fullname}
                       onChange={(e) => handleFormChange('fullname', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
-                      autoFocus
                       autoComplete="off"
                       tabIndex={1}
                     />
@@ -686,6 +687,8 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.username}</label>
                     <input
                       type="text"
+                      id="register-username"
+                      name="username"
                       value={formData.username}
                       onChange={(e) => handleFormChange('username', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
@@ -699,6 +702,8 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
                     <input
                       type="text"
+                      id="register-wilaya"
+                      name="wilaya"
                       maxLength={2}
                       value={formData.wilaya}
                       onChange={(e) => {
@@ -716,6 +721,8 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
                     <input
                       type="email"
+                      id="register-email"
+                      name="email"
                       value={formData.email}
                       onChange={(e) => handleFormChange('email', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
@@ -728,6 +735,8 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
                     <input
                       type="password"
+                      id="register-password"
+                      name="password"
                       value={formData.password}
                       onChange={(e) => handleFormChange('password', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
@@ -764,12 +773,13 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
                     <input
                       type="email"
+                      id="login-email"
+                      name="login-email"
                       value={loginData.loginUser}
                       onChange={(e) => handleLoginChange('loginUser', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
-                      autoFocus
                       autoComplete="off"
                       tabIndex={1}
                     />
@@ -777,6 +787,8 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
                     <input
                       type="password"
+                      id="login-password"
+                      name="login-password"
                       value={loginData.loginPass}
                       onChange={(e) => handleLoginChange('loginPass', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
@@ -817,12 +829,13 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
                     <input
                       type="text"
+                      id="complete-fullname"
+                      name="complete-fullname"
                       value={completeProfileData.fullname}
                       onChange={(e) => handleCompleteProfileChange('fullname', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
-                      autoFocus
                       autoComplete="off"
                       tabIndex={1}
                     />
@@ -830,6 +843,8 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.username}</label>
                     <input
                       type="text"
+                      id="complete-username"
+                      name="complete-username"
                       value={completeProfileData.username}
                       onChange={(e) => handleCompleteProfileChange('username', e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
@@ -843,6 +858,8 @@ const IndexPHP = () => {
                     <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
                     <input
                       type="text"
+                      id="complete-wilaya"
+                      name="complete-wilaya"
                       maxLength={2}
                       value={completeProfileData.wilaya}
                       onChange={(e) => {
