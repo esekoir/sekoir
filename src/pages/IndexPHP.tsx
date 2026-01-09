@@ -675,10 +675,11 @@ const IndexPHP = () => {
                       type="text"
                       value={formData.fullname}
                       onChange={(e) => handleFormChange('fullname', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
                       autoFocus
+                      autoComplete="off"
                       tabIndex={1}
                     />
 
@@ -687,9 +688,10 @@ const IndexPHP = () => {
                       type="text"
                       value={formData.username}
                       onChange={(e) => handleFormChange('username', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoComplete="off"
                       placeholder="user123"
                       tabIndex={2}
                     />
@@ -703,9 +705,10 @@ const IndexPHP = () => {
                         const val = e.target.value.replace(/\D/g, '');
                         handleFormChange('wilaya', val);
                       }}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoComplete="off"
                       placeholder="16"
                       tabIndex={3}
                     />
@@ -715,9 +718,10 @@ const IndexPHP = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleFormChange('email', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoComplete="off"
                       tabIndex={4}
                     />
 
@@ -726,8 +730,10 @@ const IndexPHP = () => {
                       type="password"
                       value={formData.password}
                       onChange={(e) => handleFormChange('password', e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoComplete="off"
                       tabIndex={5}
                     />
 
@@ -760,10 +766,11 @@ const IndexPHP = () => {
                       type="email"
                       value={loginData.loginUser}
                       onChange={(e) => handleLoginChange('loginUser', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
                       autoFocus
+                      autoComplete="off"
                       tabIndex={1}
                     />
 
@@ -772,8 +779,10 @@ const IndexPHP = () => {
                       type="password"
                       value={loginData.loginPass}
                       onChange={(e) => handleLoginChange('loginPass', e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoComplete="off"
                       tabIndex={2}
                     />
 
@@ -810,10 +819,11 @@ const IndexPHP = () => {
                       type="text"
                       value={completeProfileData.fullname}
                       onChange={(e) => handleCompleteProfileChange('fullname', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
                       autoFocus
+                      autoComplete="off"
                       tabIndex={1}
                     />
 
@@ -822,9 +832,10 @@ const IndexPHP = () => {
                       type="text"
                       value={completeProfileData.username}
                       onChange={(e) => handleCompleteProfileChange('username', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoComplete="off"
                       placeholder="user123"
                       tabIndex={2}
                     />
@@ -838,9 +849,10 @@ const IndexPHP = () => {
                         const val = e.target.value.replace(/\D/g, '');
                         handleCompleteProfileChange('wilaya', val);
                       }}
-                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                       className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:ring-2 focus:ring-white/50 outline-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
                       required
+                      autoComplete="off"
                       placeholder="16"
                       tabIndex={3}
                     />
