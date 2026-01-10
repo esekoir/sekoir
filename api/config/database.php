@@ -1,32 +1,52 @@
 <?php
 /**
- * Database Configuration
- * Update these values with your hosting credentials
+ * E-Sekoir Database Configuration
+ * ================================
+ * 
+ * غيّر القيم التالية حسب استضافتك
  */
 
-// ============ أدخل بيانات قاعدة البيانات هنا ============
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'u752343995_caba');      // اسم قاعدة البيانات
-define('DB_USER', 'u752343995_dz');        // اسم المستخدم
-define('DB_PASS', 'YOUR_DB_PASSWORD');     // ← أدخل كلمة مرور قاعدة البيانات هنا
+// ╔═══════════════════════════════════════════════════════════╗
+// ║              ⚙️ إعدادات قاعدة البيانات                     ║
+// ╚═══════════════════════════════════════════════════════════╝
+
+define('DB_HOST', 'localhost');              // عادة localhost
+define('DB_NAME', 'u752343995_caba');        // ← اسم قاعدة البيانات
+define('DB_USER', 'u752343995_dz');          // ← اسم مستخدم قاعدة البيانات  
+define('DB_PASS', 'YOUR_PASSWORD');          // ← ⚠️ كلمة مرور قاعدة البيانات
 define('DB_CHARSET', 'utf8mb4');
 
-// ============ مفتاح JWT - غيّره لنص عشوائي طويل ============
-define('JWT_SECRET', 'YOUR_JWT_SECRET_KEY');  // ← أدخل مفتاح سري طويل وعشوائي
+// ╔═══════════════════════════════════════════════════════════╗
+// ║              🔐 إعدادات الأمان                             ║
+// ╚═══════════════════════════════════════════════════════════╝
 
-// ============ Google OAuth - اختياري ============
-define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');  // ← أدخل Google Client ID هنا
+// مفتاح JWT - غيّره لنص عشوائي طويل (32 حرف على الأقل)
+define('JWT_SECRET', 'E-Sekoir-JWT-Secret-Key-2024-Change-This-To-Random-String');
 
-// Site URL
+// ╔═══════════════════════════════════════════════════════════╗
+// ║              🌐 إعدادات الموقع                             ║
+// ╚═══════════════════════════════════════════════════════════╝
+
 define('SITE_URL', 'https://caba-dz.com');
 
-// CORS Settings
+// النطاقات المسموح بها للـ CORS
 define('ALLOWED_ORIGINS', [
     'https://caba-dz.com',
     'https://www.caba-dz.com',
     'http://localhost:5173',
     'http://localhost:3000'
 ]);
+
+// ╔═══════════════════════════════════════════════════════════╗
+// ║              🔵 Google OAuth (اختياري)                     ║
+// ╚═══════════════════════════════════════════════════════════╝
+
+// للتسجيل بحساب جوجل - احصل عليه من Google Cloud Console
+define('GOOGLE_CLIENT_ID', '');
+
+// ═══════════════════════════════════════════════════════════
+// ⚠️ لا تعدّل أي شيء أسفل هذا الخط
+// ═══════════════════════════════════════════════════════════
 
 /**
  * Get PDO Database Connection
@@ -44,7 +64,7 @@ function getDB() {
             ]);
         } catch (PDOException $e) {
             http_response_code(500);
-            die(json_encode(['error' => 'Database connection failed']));
+            die(json_encode(['error' => 'Database connection failed', 'message' => $e->getMessage()]));
         }
     }
     
@@ -73,7 +93,7 @@ function setCORSHeaders() {
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
     header("Access-Control-Allow-Credentials: true");
-    header("Access-Control-Max-Age: 86400"); // Cache preflight for 24 hours
+    header("Access-Control-Max-Age: 86400");
     header("Content-Type: application/json; charset=utf-8");
     
     // Security headers
@@ -84,7 +104,7 @@ function setCORSHeaders() {
     
     // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(204); // No Content
+        http_response_code(204);
         exit();
     }
 }
@@ -107,7 +127,7 @@ function getJsonInput() {
 }
 
 /**
- * Generate UUID
+ * Generate UUID v4
  */
 function generateUUID() {
     return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
@@ -117,5 +137,37 @@ function generateUUID() {
         mt_rand(0, 0x3fff) | 0x8000,
         mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
     );
+}
+
+/**
+ * Get Site Setting
+ */
+function getSiteSetting($key, $default = null) {
+    try {
+        $pdo = getDB();
+        $stmt = $pdo->prepare("SELECT setting_value FROM site_settings WHERE setting_key = ?");
+        $stmt->execute([$key]);
+        $result = $stmt->fetch();
+        return $result ? $result['setting_value'] : $default;
+    } catch (Exception $e) {
+        return $default;
+    }
+}
+
+/**
+ * Update Site Setting
+ */
+function updateSiteSetting($key, $value) {
+    try {
+        $pdo = getDB();
+        $stmt = $pdo->prepare("
+            INSERT INTO site_settings (setting_key, setting_value) 
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+        ");
+        return $stmt->execute([$key, $value]);
+    } catch (Exception $e) {
+        return false;
+    }
 }
 ?>

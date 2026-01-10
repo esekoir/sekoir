@@ -211,6 +211,24 @@ export const adminApi = {
   getStats: async () => {
     return request('/admin/stats.php');
   },
+
+  getSettings: async () => {
+    return request('/admin/settings.php');
+  },
+
+  updateSettings: async (data: {
+    registration_enabled?: string;
+    email_verification_required?: string;
+    google_login_enabled?: string;
+    guest_comments_enabled?: string;
+    site_name?: string;
+    site_description?: string;
+  }) => {
+    return request('/admin/settings.php', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 // User type for PHP API
