@@ -1,0 +1,49 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Don't rewrite API calls
+    RewriteCond %{REQUEST_URI} ^/api [NC]
+    RewriteRule ^ - [L]
+    
+    # Don't rewrite database installer
+    RewriteCond %{REQUEST_URI} ^/database [NC]
+    RewriteRule ^ - [L]
+    
+    # Don't rewrite icons
+    RewriteCond %{REQUEST_URI} ^/icons [NC]
+    RewriteRule ^ - [L]
+    
+    # Don't rewrite existing files
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Rewrite everything else to index.html for SPA
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
+</IfModule>
+
+# Cache Control
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Error pages
+ErrorDocument 404 /index.html

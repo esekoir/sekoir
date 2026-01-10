@@ -8,9 +8,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { Trash2, Edit, Plus, Users, MessageSquare, Coins } from 'lucide-react';
+import { Trash2, Edit, Plus, Users, MessageSquare, Coins, Settings, Save } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+
+interface SiteSettings {
+  registration_enabled: string;
+  email_verification_required: string;
+  google_login_enabled: string;
+  guest_comments_enabled: string;
+  site_name: string;
+  site_description: string;
+}
 
 export const AdminPanelPHP = () => {
   const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -19,6 +29,15 @@ export const AdminPanelPHP = () => {
   const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
   const [isAddingCurrency, setIsAddingCurrency] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings>({
+    registration_enabled: 'true',
+    email_verification_required: 'false',
+    google_login_enabled: 'false',
+    guest_comments_enabled: 'true',
+    site_name: 'E-Sekoir',
+    site_description: 'منصة الصرف الشاملة'
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
   
   const [newCurrency, setNewCurrency] = useState({
     code: '',
@@ -35,6 +54,7 @@ export const AdminPanelPHP = () => {
     fetchCurrencies();
     fetchProfiles();
     fetchComments();
+    fetchSettings();
   }, []);
 
   const fetchCurrencies = async () => {
@@ -61,6 +81,29 @@ export const AdminPanelPHP = () => {
       setComments(data.comments || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const data = await adminApi.getSettings();
+      if (data.settings) {
+        setSettings(prev => ({ ...prev, ...data.settings }));
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      await adminApi.updateSettings(settings);
+      toast({ title: 'تم', description: 'تم حفظ الإعدادات بنجاح' });
+    } catch (error: any) {
+      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -147,7 +190,7 @@ export const AdminPanelPHP = () => {
   return (
     <div className="space-y-4" dir="rtl">
       <Tabs defaultValue="currencies" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="currencies" className="flex items-center gap-2 text-xs sm:text-sm">
             <Coins className="h-4 w-4" />
             <span className="hidden sm:inline">العملات</span>
@@ -159,6 +202,10 @@ export const AdminPanelPHP = () => {
           <TabsTrigger value="comments" className="flex items-center gap-2 text-xs sm:text-sm">
             <MessageSquare className="h-4 w-4" />
             <span className="hidden sm:inline">التعليقات</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2 text-xs sm:text-sm">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">الإعدادات</span>
           </TabsTrigger>
         </TabsList>
 
@@ -379,6 +426,109 @@ export const AdminPanelPHP = () => {
               </TableBody>
             </Table>
           </ScrollArea>
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="mt-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">إعدادات الموقع</h3>
+            <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings}>
+              <Save className="ml-2 h-4 w-4" />
+              {savingSettings ? 'جاري الحفظ...' : 'حفظ'}
+            </Button>
+          </div>
+          
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">إعدادات التسجيل</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">السماح بالتسجيل</Label>
+                    <p className="text-xs text-muted-foreground">تفعيل أو تعطيل تسجيل حسابات جديدة</p>
+                  </div>
+                  <Switch
+                    checked={settings.registration_enabled === 'true'}
+                    onCheckedChange={(checked) => 
+                      setSettings(prev => ({ ...prev, registration_enabled: checked ? 'true' : 'false' }))
+                    }
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">التحقق من البريد</Label>
+                    <p className="text-xs text-muted-foreground">طلب تأكيد البريد الإلكتروني عند التسجيل</p>
+                  </div>
+                  <Switch
+                    checked={settings.email_verification_required === 'true'}
+                    onCheckedChange={(checked) => 
+                      setSettings(prev => ({ ...prev, email_verification_required: checked ? 'true' : 'false' }))
+                    }
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">التسجيل بجوجل</Label>
+                    <p className="text-xs text-muted-foreground">السماح بتسجيل الدخول عبر حساب جوجل</p>
+                  </div>
+                  <Switch
+                    checked={settings.google_login_enabled === 'true'}
+                    onCheckedChange={(checked) => 
+                      setSettings(prev => ({ ...prev, google_login_enabled: checked ? 'true' : 'false' }))
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">إعدادات التعليقات</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">تعليقات الزوار</Label>
+                    <p className="text-xs text-muted-foreground">السماح للزوار بالتعليق بدون حساب</p>
+                  </div>
+                  <Switch
+                    checked={settings.guest_comments_enabled === 'true'}
+                    onCheckedChange={(checked) => 
+                      setSettings(prev => ({ ...prev, guest_comments_enabled: checked ? 'true' : 'false' }))
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">معلومات الموقع</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm">اسم الموقع</Label>
+                  <Input
+                    value={settings.site_name}
+                    onChange={(e) => setSettings(prev => ({ ...prev, site_name: e.target.value }))}
+                    placeholder="E-Sekoir"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">وصف الموقع</Label>
+                  <Input
+                    value={settings.site_description}
+                    onChange={(e) => setSettings(prev => ({ ...prev, site_description: e.target.value }))}
+                    placeholder="منصة الصرف الشاملة"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
