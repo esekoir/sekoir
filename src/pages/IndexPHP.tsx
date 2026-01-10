@@ -2,13 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, TrendingDown, RefreshCw, Download, Search, X, Info, 
   Star, DollarSign, Heart, Calculator, CreditCard, Save, Shield, 
-  Zap, Award, Moon, Sun, Chrome, User
+  Zap, Award, Moon, Sun, Chrome, User, Camera, Upload
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import html2canvas from 'html2canvas';
 import CommentSectionPHP from '@/components/CommentSectionPHP';
 import { authApi, profilesApi, Profile } from '@/lib/api';
+
+// Google Client ID - Change this to your own
+const GOOGLE_CLIENT_ID = '';
 
 interface User {
   id: string;
@@ -32,7 +35,8 @@ const IndexPHP = () => {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
-
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   // Card System State
   const [registered, setRegistered] = useState(false);
   const [globalName, setGlobalName] = useState("");
@@ -494,6 +498,120 @@ const IndexPHP = () => {
     }
   };
 
+  // Handle Google Login
+  const handleGoogleLogin = async () => {
+    if (!GOOGLE_CLIENT_ID) {
+      toast({
+        title: language === 'ar' ? 'تسجيل Google غير مفعل' : 'Google login not configured',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      // @ts-ignore - Google Identity Services
+      const google = window.google;
+      if (!google) {
+        throw new Error('Google SDK not loaded');
+      }
+
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (response: any) => {
+          try {
+            const result = await authApi.googleLogin(response.credential);
+            if (result.user) {
+              setAuthUser(result.user);
+              setProfile(result.profile);
+              
+              if (result.needs_profile_completion) {
+                setNeedsProfileCompletion(true);
+                setCurrentView('completeProfile');
+                setCompleteProfileData({
+                  fullname: result.profile?.full_name || '',
+                  username: result.profile?.username || '',
+                  wilaya: result.profile?.wilaya || ''
+                });
+              } else {
+                setGlobalName(result.profile?.full_name || '');
+                setUserWilaya(result.profile?.wilaya || '');
+                setMemberNumber(result.profile?.member_number || null);
+                setRegistered(true);
+                setCurrentView('account');
+              }
+              
+              toast({
+                title: language === 'ar' ? 'مرحباً بك!' : 'Welcome!',
+              });
+            }
+          } catch (error: any) {
+            toast({
+              title: error.message || (language === 'ar' ? 'فشل تسجيل الدخول' : 'Login failed'),
+              variant: 'destructive'
+            });
+          } finally {
+            setAuthLoading(false);
+          }
+        }
+      });
+
+      google.accounts.id.prompt();
+    } catch (error: any) {
+      toast({
+        title: language === 'ar' ? 'خطأ في Google' : 'Google error',
+        variant: 'destructive'
+      });
+      setAuthLoading(false);
+    }
+  };
+
+  // Handle Avatar Upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: language === 'ar' ? 'الملف يجب أن يكون صورة' : 'File must be an image',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: language === 'ar' ? 'حجم الصورة كبير (الحد 5 ميجا)' : 'Image too large (max 5MB)',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const result = await profilesApi.uploadAvatar(file);
+      if (result.profile) {
+        setProfile(result.profile);
+        toast({
+          title: language === 'ar' ? 'تم رفع الصورة بنجاح' : 'Avatar uploaded successfully',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: error.message || (language === 'ar' ? 'فشل رفع الصورة' : 'Upload failed'),
+        variant: 'destructive'
+      });
+    } finally {
+      setUploadingAvatar(false);
+      // Reset input
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = '';
+      }
+    }
+  };
+
   const getCardNumber = (wilaya: string = '16', memNum: number | null = null) => {
     const year = new Date().getFullYear();
     const wilayaFormatted = wilaya.padStart(2, '0');
@@ -765,6 +883,31 @@ const IndexPHP = () => {
                     >
                       {t.showLogin}
                     </button>
+
+                    {GOOGLE_CLIENT_ID && (
+                      <>
+                        <div className="flex items-center gap-2 my-2">
+                          <div className="flex-1 h-px bg-white/30"></div>
+                          <span className="text-xs opacity-70">{language === 'ar' ? 'أو' : 'OR'}</span>
+                          <div className="flex-1 h-px bg-white/30"></div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleGoogleLogin}
+                          disabled={authLoading}
+                          className="w-full bg-white text-gray-800 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                          tabIndex={8}
+                        >
+                          <svg className="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                          </svg>
+                          Google
+                        </button>
+                      </>
+                    )}
                   </form>
                 )}
 
@@ -817,6 +960,31 @@ const IndexPHP = () => {
                     >
                       {t.backToRegister}
                     </button>
+
+                    {GOOGLE_CLIENT_ID && (
+                      <>
+                        <div className="flex items-center gap-2 my-2">
+                          <div className="flex-1 h-px bg-white/30"></div>
+                          <span className="text-xs opacity-70">{language === 'ar' ? 'أو' : 'OR'}</span>
+                          <div className="flex-1 h-px bg-white/30"></div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleGoogleLogin}
+                          disabled={authLoading}
+                          className="w-full bg-white text-gray-800 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                          tabIndex={5}
+                        >
+                          <svg className="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                          </svg>
+                          Google
+                        </button>
+                      </>
+                    )}
                   </form>
                 )}
 
@@ -896,27 +1064,32 @@ const IndexPHP = () => {
                           <img 
                             src={profile.avatar_url} 
                             alt="Profile" 
-                            className="w-16 h-16 rounded-full object-cover border-2 border-white/50"
+                            className="w-20 h-20 rounded-full object-cover border-3 border-white/50 shadow-lg"
                           />
                         ) : (
-                          <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/50">
-                            <User size={28} className="text-white/80" />
+                          <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center border-3 border-white/50 shadow-lg">
+                            <User size={36} className="text-white/80" />
                           </div>
                         )}
-                        <label className="absolute -bottom-1 -right-1 bg-blue-500 hover:bg-blue-600 rounded-full p-1.5 cursor-pointer transition-colors">
+                        <label className={`absolute -bottom-1 -right-1 ${uploadingAvatar ? 'bg-gray-500' : 'bg-blue-500 hover:bg-blue-600'} rounded-full p-2 cursor-pointer transition-colors shadow-md`}>
                           <input 
+                            ref={avatarInputRef}
                             type="file" 
-                            accept="image/*" 
+                            accept="image/jpeg,image/png,image/gif,image/webp" 
                             className="hidden"
-                            onChange={(e) => {
-                              toast({
-                                title: language === 'ar' ? 'سيكون متوفراً قريباً' : 'Coming soon',
-                              });
-                            }}
+                            onChange={handleAvatarUpload}
+                            disabled={uploadingAvatar}
                           />
-                          <CreditCard size={12} className="text-white" />
+                          {uploadingAvatar ? (
+                            <RefreshCw size={14} className="text-white animate-spin" />
+                          ) : (
+                            <Camera size={14} className="text-white" />
+                          )}
                         </label>
                       </div>
+                      <span className="text-xs opacity-70 mt-1">
+                        {language === 'ar' ? 'اضغط لتغيير الصورة' : 'Click to change photo'}
+                      </span>
                     </div>
 
                     {/* معلومات بطاقة الهوية */}

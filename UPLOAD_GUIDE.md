@@ -10,6 +10,9 @@ public_html/
 │   ├── usd.png
 │   ├── eur.png
 │   └── ...
+├── uploads/            ← مجلد رفع الصور (يُنشأ تلقائياً)
+│   ├── avatars/        ← صور المستخدمين
+│   └── .htaccess       ← حماية مجلد الرفع
 ├── api/                ← ملفات PHP Backend
 │   ├── config/
 │   │   └── database.php    ← ⚠️ ملف الإعدادات (غيّره)
@@ -18,7 +21,7 @@ public_html/
 │   │   ├── login.php
 │   │   ├── register.php
 │   │   ├── me.php
-│   │   └── google.php
+│   │   └── google.php      ← تسجيل دخول Google
 │   ├── currencies/
 │   │   ├── index.php
 │   │   └── update.php
@@ -29,7 +32,8 @@ public_html/
 │   │   └── dislike.php
 │   ├── profiles/
 │   │   ├── index.php
-│   │   └── update.php
+│   │   ├── update.php
+│   │   └── upload-avatar.php   ← رفع الصور الشخصية
 │   ├── admin/
 │   │   ├── users.php
 │   │   ├── stats.php
@@ -68,12 +72,16 @@ define('DB_PASS', 'كلمة_المرور');             // ← غيّره
 
 define('JWT_SECRET', 'نص_عشوائي_طويل');       // ← غيّره لنص عشوائي
 define('SITE_URL', 'https://yoursite.com');  // ← غيّره لرابط موقعك
+
+// لتفعيل تسجيل الدخول بـ Google (اختياري)
+define('GOOGLE_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
 ```
 
 ### الخطوة 3: رفع الملفات
 
 1. ارفع جميع الملفات إلى مجلد `public_html`
 2. تأكد من رفع مجلد `api` كاملاً
+3. ارفع مجلد `uploads` (أو سيُنشأ تلقائياً)
 
 ### الخطوة 4: تشغيل سكريبت التثبيت
 
@@ -87,6 +95,40 @@ define('SITE_URL', 'https://yoursite.com');  // ← غيّره لرابط موق
 ```
 database/install.php
 ```
+
+---
+
+## 🔐 إعداد تسجيل الدخول بـ Google (اختياري)
+
+### الخطوة 1: إنشاء مشروع في Google Cloud Console
+
+1. اذهب إلى: https://console.cloud.google.com
+2. أنشئ مشروع جديد
+3. فعّل "Google+ API" أو "Google Identity"
+
+### الخطوة 2: إنشاء OAuth Client ID
+
+1. اذهب إلى "APIs & Services" → "Credentials"
+2. اضغط "Create Credentials" → "OAuth Client ID"
+3. اختر "Web Application"
+4. أضف:
+   - **Authorized JavaScript origins**: `https://yoursite.com`
+   - **Authorized redirect URIs**: `https://yoursite.com`
+5. انسخ "Client ID"
+
+### الخطوة 3: تفعيل في الموقع
+
+**في الخادم (api/config/database.php):**
+```php
+define('GOOGLE_CLIENT_ID', 'YOUR_CLIENT_ID.apps.googleusercontent.com');
+```
+
+**في الفرونت (src/pages/IndexPHP.tsx):**
+```typescript
+const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
+```
+
+⚠️ يجب أن يكون **نفس** Client ID في المكانين.
 
 ---
 
@@ -104,6 +146,34 @@ database/install.php
 
 ---
 
+## ⚙️ إعدادات لوحة التحكم
+
+بعد تسجيل الدخول كأدمن، يمكنك الوصول للوحة التحكم من:
+**البطاقة الرئيسية → اضغط عليها → لوحة التحكم**
+
+### الإعدادات المتوفرة:
+
+| الإعداد | الوصف |
+|---------|-------|
+| السماح بالتسجيل | تفعيل/تعطيل إنشاء حسابات جديدة |
+| التحقق من البريد | طلب تأكيد البريد الإلكتروني |
+| التسجيل بجوجل | تفعيل تسجيل الدخول بـ Google |
+| تعليقات الزوار | السماح للزوار بالتعليق |
+| اسم الموقع | تغيير اسم الموقع |
+| وصف الموقع | تغيير وصف الموقع |
+
+---
+
+## 📷 ميزة الصور الشخصية
+
+- المستخدمون يمكنهم رفع صورة شخصية من البطاقة الخلفية
+- الصور تُحفظ في: `uploads/avatars/`
+- الحد الأقصى: 5 ميجابايت
+- الأنواع المدعومة: JPG, PNG, GIF, WebP
+- الصور تظهر في التعليقات وفي البطاقة
+
+---
+
 ## 🔧 ملف .htaccess الرئيسي
 
 ضع هذا الملف في `public_html/.htaccess`:
@@ -115,6 +185,10 @@ database/install.php
     
     # Don't rewrite API calls
     RewriteCond %{REQUEST_URI} ^/api [NC]
+    RewriteRule ^ - [L]
+    
+    # Don't rewrite uploads
+    RewriteCond %{REQUEST_URI} ^/uploads [NC]
     RewriteRule ^ - [L]
     
     # Don't rewrite existing files
@@ -156,6 +230,29 @@ database/install.php
 
 ---
 
+## 📂 ملف uploads/.htaccess
+
+```apache
+# Allow access to uploaded files
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+# Prevent PHP execution in uploads folder
+<FilesMatch "\.ph(p[3-7]?|tml)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Allow only image files
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|ico)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+```
+
+---
+
 ## ✅ اختبار التثبيت
 
 بعد الرفع، جرب هذه الروابط:
@@ -178,6 +275,14 @@ database/install.php
 ### صفحة بيضاء
 - تأكد من رفع جميع ملفات `assets`
 - تأكد من ملف `.htaccess`
+
+### فشل رفع الصور
+- تأكد من صلاحيات مجلد `uploads` (755)
+- تأكد أن `upload_max_filesize` في PHP أكبر من 5M
+
+### زر Google لا يظهر
+- تأكد من إضافة `GOOGLE_CLIENT_ID` في الملفين
+- تأكد من تفعيل الميزة في لوحة التحكم
 
 ---
 
