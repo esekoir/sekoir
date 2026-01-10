@@ -63,6 +63,17 @@ export const authApi = {
     return request('/auth/me.php');
   },
 
+  googleLogin: async (idToken: string) => {
+    const result = await request('/auth/google.php', {
+      method: 'POST',
+      body: JSON.stringify({ id_token: idToken }),
+    });
+    if (result.access_token) {
+      setToken(result.access_token);
+    }
+    return result;
+  },
+
   logout: () => {
     removeToken();
   },
@@ -89,6 +100,28 @@ export const profilesApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  },
+
+  uploadAvatar: async (file: File) => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch(`${API_BASE_URL}/profiles/upload-avatar.php`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Upload failed');
+    }
+    
+    return data;
   },
 
   getAll: async () => {
