@@ -1,294 +1,318 @@
-# 📱 دليل رفع E-Sekoir على الاستضافة (من الهاتف)
+# 📱 دليل رفع E-Sekoir على الاستضافة
+## (للهاتف والكمبيوتر)
 
-## 📁 هيكل الملفات المطلوب رفعها
+---
 
+## 📁 الملفات المطلوبة
+
+### 1️⃣ ملفات الواجهة الأمامية (Frontend)
 ```
 public_html/
-├── index.html          ← الصفحة الرئيسية
-├── assets/             ← ملفات JavaScript و CSS
-├── icons/              ← أيقونات العملات
-│   ├── usd.png
-│   ├── eur.png
-│   └── ...
-├── uploads/            ← مجلد رفع الصور (يُنشأ تلقائياً)
-│   ├── avatars/        ← صور المستخدمين
-│   └── .htaccess       ← حماية مجلد الرفع
-├── api/                ← ملفات PHP Backend
-│   ├── config/
-│   │   └── database.php    ← ⚠️ ملف الإعدادات (غيّره)
-│   ├── auth/
-│   │   ├── jwt.php
-│   │   ├── login.php
-│   │   ├── register.php
-│   │   ├── me.php
-│   │   └── google.php      ← تسجيل دخول Google
-│   ├── currencies/
-│   │   ├── index.php
-│   │   └── update.php
-│   ├── comments/
-│   │   ├── index.php
-│   │   ├── delete.php
-│   │   ├── like.php
-│   │   └── dislike.php
-│   ├── profiles/
-│   │   ├── index.php
-│   │   ├── update.php
-│   │   └── upload-avatar.php   ← رفع الصور الشخصية
-│   ├── admin/
-│   │   ├── users.php
-│   │   ├── stats.php
-│   │   └── settings.php
-│   ├── health.php
-│   └── .htaccess
-├── database/
-│   └── install.php     ← سكريبت التثبيت (احذفه بعد التثبيت)
-├── .htaccess           ← لتوجيه الروابط
-└── robots.txt
+├── index.html
+├── assets/          ← ملفات CSS و JS المُولّدة
+├── icons/           ← أيقونات العملات
+└── .htaccess        ← توجيه الروابط
+```
+
+### 2️⃣ ملفات الـ API (Backend)
+```
+public_html/api/
+├── config/
+│   └── database.php   ← ⚠️ غيّر بيانات قاعدة البيانات هنا
+├── auth/
+│   ├── jwt.php
+│   ├── login.php
+│   ├── register.php
+│   ├── me.php
+│   └── google.php
+├── admin/
+│   ├── settings.php
+│   ├── stats.php
+│   └── users.php
+├── profiles/
+│   ├── index.php
+│   ├── update.php
+│   └── upload-avatar.php
+├── comments/
+│   ├── index.php
+│   ├── delete.php
+│   ├── like.php
+│   └── dislike.php
+├── currencies/
+│   ├── index.php
+│   └── update.php
+├── health.php
+└── .htaccess
+```
+
+### 3️⃣ مجلد الرفع (للصور الشخصية)
+```
+public_html/uploads/
+├── avatars/
+│   └── .gitkeep
+└── .htaccess
+```
+
+### 4️⃣ ملف تثبيت قاعدة البيانات
+```
+public_html/database/
+└── install.php   ← سكريبت التثبيت (احذفه بعد التثبيت!)
 ```
 
 ---
 
-## 🚀 خطوات التثبيت
+## 🔧 خطوات التثبيت
 
 ### الخطوة 1: إنشاء قاعدة البيانات
-
-1. ادخل لوحة تحكم الاستضافة (cPanel أو DirectAdmin)
-2. ابحث عن "MySQL Databases"
-3. أنشئ قاعدة بيانات جديدة
-4. أنشئ مستخدم جديد مع كلمة مرور قوية
-5. اربط المستخدم بقاعدة البيانات مع صلاحيات كاملة
+1. ادخل لوحة التحكم **cPanel** أو **Hostinger**
+2. اذهب إلى **MySQL Databases**
+3. أنشئ قاعدة بيانات جديدة (مثل: `caba_db`)
+4. أنشئ مستخدم MySQL جديد بكلمة مرور قوية
+5. اربط المستخدم بقاعدة البيانات (All Privileges)
 
 ### الخطوة 2: تعديل ملف الإعدادات
-
-افتح الملف: `api/config/database.php`
-
-غيّر هذه القيم:
+افتح `api/config/database.php` وغيّر:
 
 ```php
-define('DB_HOST', 'localhost');              // عادة localhost
-define('DB_NAME', 'اسم_قاعدة_البيانات');      // ← غيّره
-define('DB_USER', 'اسم_المستخدم');            // ← غيّره
-define('DB_PASS', 'كلمة_المرور');             // ← غيّره
+// ═══════════════════════════════════════════════════════
+// ⚠️ غيّر هذه الإعدادات حسب استضافتك
+// ═══════════════════════════════════════════════════════
 
-define('JWT_SECRET', 'نص_عشوائي_طويل');       // ← غيّره لنص عشوائي
-define('SITE_URL', 'https://yoursite.com');  // ← غيّره لرابط موقعك
+// قاعدة البيانات
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'اسم_قاعدة_البيانات');      // ← غيّرها
+define('DB_USER', 'اسم_المستخدم');           // ← غيّرها
+define('DB_PASS', 'كلمة_المرور');            // ← غيّرها
 
-// لتفعيل تسجيل الدخول بـ Google (اختياري)
-define('GOOGLE_CLIENT_ID', 'your-client-id.apps.googleusercontent.com');
+// رابط الموقع
+define('SITE_URL', 'https://caba-dz.com');    // ← غيّرها لرابط موقعك
+
+// Google Login (اختياري)
+define('GOOGLE_CLIENT_ID', '');               // ← أضف Google Client ID إذا أردت
 ```
 
-### الخطوة 3: رفع الملفات
+### الخطوة 3: تعديل ملف install.php
+افتح `database/install.php` وغيّر نفس البيانات:
 
-1. ارفع جميع الملفات إلى مجلد `public_html`
-2. تأكد من رفع مجلد `api` كاملاً
-3. ارفع مجلد `uploads` (أو سيُنشأ تلقائياً)
-
-### الخطوة 4: تشغيل سكريبت التثبيت
-
-1. افتح الرابط: `https://yoursite.com/database/install.php`
-2. انتظر اكتمال التثبيت
-3. سترى بيانات حساب الأدمن
-
-### الخطوة 5: حذف ملف التثبيت (مهم جداً!)
-
-بعد التثبيت، احذف الملف:
+```php
+$config = [
+    'host'     => 'localhost',
+    'dbname'   => 'اسم_قاعدة_البيانات',    // ← غيّرها
+    'username' => 'اسم_المستخدم',          // ← غيّرها
+    'password' => 'كلمة_المرور',           // ← غيّرها
+];
 ```
-database/install.php
+
+### الخطوة 4: رفع الملفات
+1. ارفع كل الملفات إلى مجلد `public_html`
+2. تأكد من رفع مجلد `api` و `uploads` و `database`
+
+### الخطوة 5: تشغيل التثبيت
+افتح في المتصفح:
 ```
+https://موقعك.com/database/install.php
+```
+
+ستظهر رسائل نجاح لكل جدول يتم إنشاؤه.
+
+### الخطوة 6: حذف ملف التثبيت ⚠️
+بعد نجاح التثبيت، **احذف** ملف `database/install.php` فوراً للأمان!
 
 ---
 
-## 🔐 إعداد تسجيل الدخول بـ Google (اختياري)
-
-### الخطوة 1: إنشاء مشروع في Google Cloud Console
-
-1. اذهب إلى: https://console.cloud.google.com
-2. أنشئ مشروع جديد
-3. فعّل "Google+ API" أو "Google Identity"
-
-### الخطوة 2: إنشاء OAuth Client ID
-
-1. اذهب إلى "APIs & Services" → "Credentials"
-2. اضغط "Create Credentials" → "OAuth Client ID"
-3. اختر "Web Application"
-4. أضف:
-   - **Authorized JavaScript origins**: `https://yoursite.com`
-   - **Authorized redirect URIs**: `https://yoursite.com`
-5. انسخ "Client ID"
-
-### الخطوة 3: تفعيل في الموقع
-
-**في الخادم (api/config/database.php):**
-```php
-define('GOOGLE_CLIENT_ID', 'YOUR_CLIENT_ID.apps.googleusercontent.com');
-```
-
-**في الفرونت (src/pages/IndexPHP.tsx):**
-```typescript
-const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
-```
-
-⚠️ يجب أن يكون **نفس** Client ID في المكانين.
-
----
-
-## 👤 بيانات حساب الأدمن الافتراضي
+## 👤 حساب الأدمن الافتراضي
 
 | الحقل | القيمة |
 |-------|--------|
-| البريد الإلكتروني | `admin@caba-dz.com` |
+| البريد | `admin@caba-dz.com` |
 | كلمة المرور | `Admin@123456` |
 | اسم المستخدم | `admin` |
 
-⚠️ **غيّر كلمة المرور فوراً بعد أول تسجيل دخول!**
-
-يمكنك تغيير هذه البيانات في ملف `database/install.php` قبل التثبيت.
+**⚠️ غيّر كلمة المرور فوراً بعد أول تسجيل دخول!**
 
 ---
 
-## ⚙️ إعدادات لوحة التحكم
+## 🔐 ملف .htaccess الرئيسي
 
-بعد تسجيل الدخول كأدمن، يمكنك الوصول للوحة التحكم من:
-**البطاقة الرئيسية → اضغط عليها → لوحة التحكم**
-
-### الإعدادات المتوفرة:
-
-| الإعداد | الوصف |
-|---------|-------|
-| السماح بالتسجيل | تفعيل/تعطيل إنشاء حسابات جديدة |
-| التحقق من البريد | طلب تأكيد البريد الإلكتروني |
-| التسجيل بجوجل | تفعيل تسجيل الدخول بـ Google |
-| تعليقات الزوار | السماح للزوار بالتعليق |
-| اسم الموقع | تغيير اسم الموقع |
-| وصف الموقع | تغيير وصف الموقع |
-
----
-
-## 📷 ميزة الصور الشخصية
-
-- المستخدمون يمكنهم رفع صورة شخصية من البطاقة الخلفية
-- الصور تُحفظ في: `uploads/avatars/`
-- الحد الأقصى: 5 ميجابايت
-- الأنواع المدعومة: JPG, PNG, GIF, WebP
-- الصور تظهر في التعليقات وفي البطاقة
-
----
-
-## 🔧 ملف .htaccess الرئيسي
-
-ضع هذا الملف في `public_html/.htaccess`:
+انسخ هذا المحتوى إلى `public_html/.htaccess`:
 
 ```apache
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
     
-    # Don't rewrite API calls
-    RewriteCond %{REQUEST_URI} ^/api [NC]
+    # API calls - forward to PHP backend
+    RewriteRule ^api/(.*)$ api/$1 [L]
+    
+    # Database installer (remove after installation)
+    RewriteRule ^database/(.*)$ database/$1 [L]
+    
+    # Uploads folder
+    RewriteRule ^uploads/(.*)$ uploads/$1 [L]
+    
+    # Icons and static assets
+    RewriteRule ^icons/(.*)$ icons/$1 [L]
+    
+    # If the request is for an existing file or directory, serve it
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
     
-    # Don't rewrite uploads
-    RewriteCond %{REQUEST_URI} ^/uploads [NC]
-    RewriteRule ^ - [L]
-    
-    # Don't rewrite existing files
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    
-    # Rewrite everything else to index.html
+    # Otherwise, redirect to index.html (SPA routing)
     RewriteRule ^ index.html [L]
 </IfModule>
 
-# Security headers
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
+</IfModule>
+
+# Cache Control
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# Security Headers
 <IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "DENY"
-    Header set X-XSS-Protection "1; mode=block"
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options SAMEORIGIN
+    Header always set X-XSS-Protection "1; mode=block"
 </IfModule>
 ```
 
 ---
 
-## 📂 ملف api/.htaccess
+## 🔐 ملف api/.htaccess
 
 ```apache
-# Allow API access
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
-    # Handle OPTIONS requests for CORS
+    # Handle preflight OPTIONS requests
     RewriteCond %{REQUEST_METHOD} OPTIONS
     RewriteRule ^(.*)$ $1 [R=200,L]
 </IfModule>
 
 # PHP settings
-<IfModule mod_php8.c>
-    php_value display_errors 0
-    php_value log_errors 1
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_value max_execution_time 60
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
 </IfModule>
 ```
 
 ---
 
-## 📂 ملف uploads/.htaccess
+## 📤 ملف uploads/.htaccess
 
 ```apache
-# Allow access to uploaded files
-<IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
-</IfModule>
-
-# Prevent PHP execution in uploads folder
-<FilesMatch "\.ph(p[3-7]?|tml)$">
-    Order Deny,Allow
+# Prevent PHP execution in uploads directory
+<FilesMatch "\.php$">
     Deny from all
 </FilesMatch>
 
-# Allow only image files
-<FilesMatch "\.(jpg|jpeg|png|gif|webp|ico)$">
-    Order Allow,Deny
-    Allow from all
-</FilesMatch>
+# Disable script execution
+Options -ExecCGI
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .phps
+
+# Set correct MIME types for images
+<IfModule mod_mime.c>
+    AddType image/jpeg .jpg .jpeg
+    AddType image/png .png
+    AddType image/gif .gif
+    AddType image/webp .webp
+</IfModule>
+
+# Cache images
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+</IfModule>
 ```
 
 ---
 
-## ✅ اختبار التثبيت
+## 🔑 تفعيل Google Login (اختياري)
 
-بعد الرفع، جرب هذه الروابط:
+### 1. إنشاء مشروع في Google Cloud Console
+1. اذهب إلى [Google Cloud Console](https://console.cloud.google.com)
+2. أنشئ مشروع جديد
+3. فعّل **Google+ API**
+4. اذهب إلى **Credentials** > **Create Credentials** > **OAuth Client ID**
+5. اختر **Web Application**
+6. أضف Authorized JavaScript origins:
+   - `https://caba-dz.com`
+   - `https://www.caba-dz.com`
+7. انسخ **Client ID**
 
-1. **الصفحة الرئيسية**: `https://yoursite.com`
-2. **فحص الـ API**: `https://yoursite.com/api/health.php`
-3. **فحص العملات**: `https://yoursite.com/api/currencies/index.php`
+### 2. إضافة Client ID للمشروع
+أضف الـ Client ID في ملفين:
+
+**`api/config/database.php`:**
+```php
+define('GOOGLE_CLIENT_ID', 'YOUR_CLIENT_ID.apps.googleusercontent.com');
+```
+
+**`database/install.php`:**
+```php
+$siteSettings = [
+    // ...
+    'google_client_id' => 'YOUR_CLIENT_ID.apps.googleusercontent.com'
+];
+```
 
 ---
 
-## 🆘 حل المشاكل الشائعة
+## ✅ اختبار الموقع
+
+بعد التثبيت، تحقق من:
+
+1. ✅ الصفحة الرئيسية تعمل
+2. ✅ زر التسجيل يعمل (اقلب البطاقة الأولى)
+3. ✅ تسجيل الدخول يعمل
+4. ✅ زر Google يظهر (سيظهر رسالة إذا لم يكن مُفعّل)
+5. ✅ التعليقات تعمل
+6. ✅ لوحة التحكم تعمل (سجّل دخول كأدمن)
+7. ✅ رفع الصورة الشخصية يعمل
+
+---
+
+## 🆘 حل المشاكل
 
 ### خطأ 500 Internal Server Error
-- تأكد من صلاحيات الملفات (644 للملفات، 755 للمجلدات)
-- تأكد من صحة بيانات قاعدة البيانات
+- تحقق من صلاحيات الملفات (644 للملفات، 755 للمجلدات)
+- تحقق من بيانات قاعدة البيانات
 
 ### خطأ CORS
-- تأكد أن `SITE_URL` و `ALLOWED_ORIGINS` في `database.php` صحيحة
+- تأكد من إضافة رابط موقعك في `ALLOWED_ORIGINS` في `api/config/database.php`
 
-### صفحة بيضاء
-- تأكد من رفع جميع ملفات `assets`
-- تأكد من ملف `.htaccess`
+### الصفحات لا تعمل
+- تأكد من وجود ملف `.htaccess` الصحيح
+- تأكد من تفعيل `mod_rewrite` في Apache
 
-### فشل رفع الصور
-- تأكد من صلاحيات مجلد `uploads` (755)
-- تأكد أن `upload_max_filesize` في PHP أكبر من 5M
-
-### زر Google لا يظهر
-- تأكد من إضافة `GOOGLE_CLIENT_ID` في الملفين
-- تأكد من تفعيل الميزة في لوحة التحكم
+### Google Login لا يعمل
+- تأكد من إضافة `GOOGLE_CLIENT_ID` صحيح
+- تأكد من إضافة رابط موقعك في Google Console
 
 ---
 
-## 📞 للمساعدة
+## 📞 الدعم
 
-إذا واجهت أي مشكلة:
-1. تأكد من اتباع الخطوات بالترتيب
-2. تحقق من رسائل الخطأ في ملفات logs
-3. جرب فتح `/api/health.php` لفحص الاتصال
+إذا واجهت مشاكل:
+1. تحقق من سجلات الأخطاء في cPanel
+2. جرّب `https://موقعك.com/api/health.php` للتحقق من الـ API
+
+---
+
+**🎉 مبروك! موقعك جاهز للاستخدام!**
