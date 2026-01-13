@@ -1212,15 +1212,24 @@ const IndexPHP = () => {
             <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-2">
               <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold">{t.officialBank}</div>
               <div className="text-xl font-bold text-blue-800 dark:text-blue-200">{formatNumber(item.official)} DZD</div>
+              <div className="text-[10px] text-blue-500 dark:text-blue-400 opacity-75 mt-1">
+                {language === 'ar' ? '* السعر الرسمي من بنك الجزائر' : '* Official rate from Bank of Algeria'}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2">
                 <div className="text-xs text-green-600 dark:text-green-400 font-semibold">{t.squareBuy}</div>
                 <div className="text-lg font-bold text-green-800 dark:text-green-200">{formatNumber(item.squareBuy)}</div>
+                <div className="text-[10px] text-green-500 dark:text-green-400 opacity-75">
+                  {language === 'ar' ? '* سعر الشراء في السوق الموازية' : '* Parallel market buy rate'}
+                </div>
               </div>
               <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-2">
                 <div className="text-xs text-red-600 dark:text-red-400 font-semibold">{t.squareSell}</div>
                 <div className="text-lg font-bold text-red-800 dark:text-red-200">{formatNumber(item.squareSell)}</div>
+                <div className="text-[10px] text-red-500 dark:text-red-400 opacity-75">
+                  {language === 'ar' ? '* سعر البيع في السوق الموازية' : '* Parallel market sell rate'}
+                </div>
               </div>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
@@ -1229,6 +1238,12 @@ const IndexPHP = () => {
                 {item.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 {Math.abs(item.change24h)}%
               </span>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 text-[10px] text-gray-500 dark:text-gray-400">
+              <Info size={10} className="inline mr-1" />
+              {language === 'ar' 
+                ? 'الأسعار تقديرية وقد تختلف حسب المنطقة والكمية. السعر الرسمي + ~35% = سعر السكوار التقريبي'
+                : 'Prices are estimates and may vary by region. Official + ~35% = approximate Square rate'}
             </div>
             <CommentSectionPHP currencyCode={item.id} language={language} />
           </div>

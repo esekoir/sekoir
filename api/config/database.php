@@ -27,15 +27,11 @@ define('JWT_SECRET', 'E-Sekoir-JWT-Secret-Key-2024-Change-This-To-Random-String'
 // ║              🌐 إعدادات الموقع                             ║
 // ╚═══════════════════════════════════════════════════════════╝
 
-define('SITE_URL', 'https://gousra.online');
+// النطاقات المسموح بها للـ CORS - اتركها فارغة للسماح بأي دومين
+define('SITE_URL', '');
 
-// النطاقات المسموح بها للـ CORS
-define('ALLOWED_ORIGINS', [
-    'https://gousra.online',
-    'https://www.gousra.online',
-    'http://localhost:5173',
-    'http://localhost:3000'
-]);
+// السماح بأي دومين (للاستخدام على عدة مواقع)
+define('ALLOW_ALL_ORIGINS', true);
 
 // ╔═══════════════════════════════════════════════════════════╗
 // ║              🔵 Google OAuth (اختياري)                     ║
@@ -77,19 +73,27 @@ function getDB() {
 function setCORSHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     
-    // Validate origin against whitelist
-    if (!empty($origin) && in_array($origin, ALLOWED_ORIGINS)) {
-        header("Access-Control-Allow-Origin: $origin");
-        header("Vary: Origin");
-    } else if (empty($origin)) {
-        // Allow same-origin requests (no Origin header)
-        header("Access-Control-Allow-Origin: " . SITE_URL);
+    // Allow all origins if configured
+    if (defined('ALLOW_ALL_ORIGINS') && ALLOW_ALL_ORIGINS) {
+        if (!empty($origin)) {
+            header("Access-Control-Allow-Origin: $origin");
+        } else {
+            header("Access-Control-Allow-Origin: *");
+        }
     } else {
-        // Block unauthorized origins
-        http_response_code(403);
-        die(json_encode(['error' => 'Origin not allowed', 'origin' => $origin]));
+        // Validate origin against whitelist
+        $allowedOrigins = defined('ALLOWED_ORIGINS') ? ALLOWED_ORIGINS : [];
+        if (!empty($origin) && in_array($origin, $allowedOrigins)) {
+            header("Access-Control-Allow-Origin: $origin");
+        } else if (empty($origin)) {
+            header("Access-Control-Allow-Origin: *");
+        } else {
+            http_response_code(403);
+            die(json_encode(['error' => 'Origin not allowed', 'origin' => $origin]));
+        }
     }
     
+    header("Vary: Origin");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
     header("Access-Control-Allow-Credentials: true");

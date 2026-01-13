@@ -1,5 +1,5 @@
-// API Configuration - Change this to your hosting URL
-const API_BASE_URL = 'https://gousra.online/api';
+// API Configuration - Uses relative path for multi-domain support
+const API_BASE_URL = '/api';
 
 // Token management
 const getToken = () => localStorage.getItem('auth_token');
