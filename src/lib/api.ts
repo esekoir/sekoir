@@ -1,5 +1,5 @@
-// API Configuration - Uses relative path for multi-domain support
-const API_BASE_URL = '/api';
+// API Configuration - Change this to your hosting URL
+const API_BASE_URL = 'https://caba-dz.com/api';
 
 // Token management
 const getToken = () => localStorage.getItem('auth_token');
@@ -63,17 +63,6 @@ export const authApi = {
     return request('/auth/me.php');
   },
 
-  googleLogin: async (idToken: string) => {
-    const result = await request('/auth/google.php', {
-      method: 'POST',
-      body: JSON.stringify({ id_token: idToken }),
-    });
-    if (result.access_token) {
-      setToken(result.access_token);
-    }
-    return result;
-  },
-
   logout: () => {
     removeToken();
   },
@@ -100,28 +89,6 @@ export const profilesApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-  },
-
-  uploadAvatar: async (file: File) => {
-    const token = getToken();
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    const response = await fetch(`${API_BASE_URL}/profiles/upload-avatar.php`, {
-      method: 'POST',
-      headers: {
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      },
-      body: formData,
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Upload failed');
-    }
-    
-    return data;
   },
 
   getAll: async () => {
@@ -243,24 +210,6 @@ export const adminApi = {
 
   getStats: async () => {
     return request('/admin/stats.php');
-  },
-
-  getSettings: async () => {
-    return request('/admin/settings.php');
-  },
-
-  updateSettings: async (data: {
-    registration_enabled?: string;
-    email_verification_required?: string;
-    google_login_enabled?: string;
-    guest_comments_enabled?: string;
-    site_name?: string;
-    site_description?: string;
-  }) => {
-    return request('/admin/settings.php', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
   },
 };
 

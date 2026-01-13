@@ -1,43 +1,27 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
-  Download,
-  Search,
-  X,
-  Info,
-  Star,
-  DollarSign,
-  Heart,
-  Calculator,
-  CreditCard,
-  Save,
-  Shield,
-  Zap,
-  Award,
-  Moon,
-  Sun,
-  Chrome,
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getCurrencyIcon } from "@/components/icons/CurrencyIcons";
-import html2canvas from "html2canvas";
-import CommentSection from "@/components/CommentSection";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  TrendingUp, TrendingDown, RefreshCw, Download, Search, X, Info, 
+  Star, DollarSign, Heart, Calculator, CreditCard, Save, Shield, 
+  Zap, Award, Moon, Sun, Chrome
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
+import html2canvas from 'html2canvas';
+import CommentSection from '@/components/CommentSection';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const { toast } = useToast();
-  const [language, setLanguage] = useState<"ar" | "en">("en");
+  const [language, setLanguage] = useState<'ar' | 'en'>('en');
   const [darkMode, setDarkMode] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [showCalculator, setShowCalculator] = useState(false);
   const [calcAmount, setCalcAmount] = useState(100);
-  const [calcFrom, setCalcFrom] = useState("eur");
-  const [calcTo, setCalcTo] = useState("dzd");
+  const [calcFrom, setCalcFrom] = useState('eur');
+  const [calcTo, setCalcTo] = useState('dzd');
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<any>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -50,176 +34,174 @@ const Index = () => {
   const [userWilaya, setUserWilaya] = useState("");
   const [memberNumber, setMemberNumber] = useState<number | null>(null);
   const [balanceAmount, setBalanceAmount] = useState(0);
-  const [currentView, setCurrentView] = useState("register");
+  const [currentView, setCurrentView] = useState('register');
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
   const [flippedCards, setFlippedCards] = useState({
     main: false,
     card2: false,
     card3: false,
     card4: false,
-    card5: false,
+    card5: false
   });
   const [formData, setFormData] = useState({
-    fullname: "",
-    username: "",
-    wilaya: "",
-    email: "",
-    password: "",
+    fullname: '',
+    username: '',
+    wilaya: '',
+    email: '',
+    password: ''
   });
   const [loginData, setLoginData] = useState({
-    loginUser: "",
-    loginPass: "",
+    loginUser: '',
+    loginPass: ''
   });
   const [completeProfileData, setCompleteProfileData] = useState({
-    fullname: "",
-    username: "",
-    wilaya: "",
+    fullname: '',
+    username: '',
+    wilaya: ''
   });
-  const [formError, setFormError] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [completeProfileError, setCompleteProfileError] = useState("");
+  const [formError, setFormError] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [completeProfileError, setCompleteProfileError] = useState('');
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Translations
   const translations = {
     ar: {
-      title: "E-Sekoir",
-      subtitle: "منصة الصرف الشاملة",
-      search: "ابحث عن عملة، ذهب، منصة...",
-      calculator: "حاسبة التحويل",
-      categories: { all: "الكل", currency: "العملات", crypto: "الرقمية", gold: "الذهب", transfer: "التحويل" },
-      popular: "الأكثر تداولاً",
-      noResults: "لا توجد نتائج",
-      tryAgain: "حاول البحث بكلمات أخرى",
-      officialBank: "البنك الرسمي",
-      squareBuy: "شراء السكوار",
-      squareSell: "بيع السكوار",
-      change24h: "التغير 24 ساعة",
-      priceInDZD: "السعر بالدينار",
-      priceInUSD: "السعر بالدولار",
-      buy: "شراء",
-      sell: "بيع",
-      fees: "الرسوم",
-      speed: "السرعة",
-      rating: "التقييم",
-      amount: "المبلغ",
-      from: "من",
-      to: "إلى",
-      result: "النتيجة",
-      estimate: "* الأسعار تقديرية",
-      favorites: "المفضلة",
-      download: "تحميل",
-      priceExplanation: "كيف نحسب الأسعار؟",
-      priceStep1: "السعر الرسمي: من البنك المركزي عبر API موثوق",
-      priceStep2: "سعر السكوار الأساسي = السعر الرسمي × 1.85",
-      priceStep3: "سعر الشراء (أنت تبيع) = -2.7%",
-      priceStep4: "سعر البيع (أنت تشتري) = +2.7%",
-      priceStep5: "الفرق 5.4% = عمولة الصراف",
-      apiSource: "المصدر: ExchangeRate-API.com",
-      realTimeUpdate: "تحديث كل دقيقة",
-      formulaTitle: "معادلة الحساب",
-      dataSource: "مصدر البيانات",
-      calculationMethod: "طريقة الحساب",
-      importantNote: "ملاحظة مهمة:",
-      noteText: "أسعار السكوار تقديرية وقد تختلف قليلاً حسب المنطقة والصراف.",
-      liveData: "بيانات حية ودقيقة",
-      perGram: "للجرام",
-      fullname: "الاسم الكامل (بالفرنسية)",
-      username: "اسم المستخدم",
-      wilaya: "الولاية (رقمين)",
-      email: "البريد الإلكتروني",
-      password: "كلمة المرور",
-      save: "حفظ",
-      login: "دخول",
-      register: "تسجيل",
-      account: "الحساب",
-      balance: "الرصيد",
-      charge: "شحن الرصيد",
-      edit: "تعديل المعلومات",
-      logout: "تسجيل الخروج",
-      backToRegister: "رجوع للتسجيل",
-      completeProfile: "أكمل بياناتك",
-      memberNumber: "رقم العضوية",
-      showLogin: "تسجيل الدخول",
-      upgradeCard: "ترقية البطاقة",
-      cardHolder: "اسم الحامل",
-      validThru: "صالحة حتى",
-      loading: "جاري التحميل...",
+      title: 'E-Sekoir',
+      subtitle: 'منصة الصرف الشاملة',
+      search: 'ابحث عن عملة، ذهب، منصة...',
+      calculator: 'حاسبة التحويل',
+      categories: { all: 'الكل', currency: 'العملات', crypto: 'الرقمية', gold: 'الذهب', transfer: 'التحويل' },
+      popular: 'الأكثر تداولاً',
+      noResults: 'لا توجد نتائج',
+      tryAgain: 'حاول البحث بكلمات أخرى',
+      officialBank: 'البنك الرسمي',
+      squareBuy: 'شراء السكوار',
+      squareSell: 'بيع السكوار',
+      change24h: 'التغير 24 ساعة',
+      priceInDZD: 'السعر بالدينار',
+      priceInUSD: 'السعر بالدولار',
+      buy: 'شراء',
+      sell: 'بيع',
+      fees: 'الرسوم',
+      speed: 'السرعة',
+      rating: 'التقييم',
+      amount: 'المبلغ',
+      from: 'من',
+      to: 'إلى',
+      result: 'النتيجة',
+      estimate: '* الأسعار تقديرية',
+      favorites: 'المفضلة',
+      download: 'تحميل',
+      priceExplanation: 'كيف نحسب الأسعار؟',
+      priceStep1: 'السعر الرسمي: من البنك المركزي عبر API موثوق',
+      priceStep2: 'سعر السكوار الأساسي = السعر الرسمي × 1.85',
+      priceStep3: 'سعر الشراء (أنت تبيع) = -2.7%',
+      priceStep4: 'سعر البيع (أنت تشتري) = +2.7%',
+      priceStep5: 'الفرق 5.4% = عمولة الصراف',
+      apiSource: 'المصدر: ExchangeRate-API.com',
+      realTimeUpdate: 'تحديث كل دقيقة',
+      formulaTitle: 'معادلة الحساب',
+      dataSource: 'مصدر البيانات',
+      calculationMethod: 'طريقة الحساب',
+      importantNote: 'ملاحظة مهمة:',
+      noteText: 'أسعار السكوار تقديرية وقد تختلف قليلاً حسب المنطقة والصراف.',
+      liveData: 'بيانات حية ودقيقة',
+      perGram: 'للجرام',
+      fullname: 'الاسم الكامل (بالفرنسية)',
+      username: 'اسم المستخدم',
+      wilaya: 'الولاية (رقمين)',
+      email: 'البريد الإلكتروني',
+      password: 'كلمة المرور',
+      save: 'حفظ',
+      login: 'دخول',
+      register: 'تسجيل',
+      account: 'الحساب',
+      balance: 'الرصيد',
+      charge: 'شحن الرصيد',
+      edit: 'تعديل المعلومات',
+      logout: 'تسجيل الخروج',
+      backToRegister: 'رجوع للتسجيل',
+      completeProfile: 'أكمل بياناتك',
+      memberNumber: 'رقم العضوية',
+      showLogin: 'تسجيل الدخول',
+      upgradeCard: 'ترقية البطاقة',
+      cardHolder: 'اسم الحامل',
+      validThru: 'صالحة حتى',
+      loading: 'جاري التحميل...'
     },
     en: {
-      title: "E-Sekoir",
-      subtitle: "Complete Exchange Platform",
-      search: "Search...",
-      calculator: "Calculator",
-      categories: { all: "All", currency: "Currencies", crypto: "Crypto", gold: "Gold", transfer: "Transfer" },
-      popular: "Most Traded",
-      noResults: "No Results",
-      tryAgain: "Try different keywords",
-      officialBank: "Official Bank",
-      squareBuy: "Square Buy",
-      squareSell: "Square Sell",
-      change24h: "24h Change",
-      priceInDZD: "Price in DZD",
-      priceInUSD: "Price in USD",
-      buy: "Buy",
-      sell: "Sell",
-      fees: "Fees",
-      speed: "Speed",
-      rating: "Rating",
-      amount: "Amount",
-      from: "From",
-      to: "To",
-      result: "Result",
-      estimate: "* Est. prices",
-      favorites: "Favorites",
-      download: "Download",
-      priceExplanation: "How We Calculate?",
-      priceStep1: "Official Rate from API",
-      priceStep2: "Square = Official × 1.85",
-      priceStep3: "Buy = -2.7%",
-      priceStep4: "Sell = +2.7%",
-      priceStep5: "Diff 5.4% = Commission",
-      apiSource: "Source: ExchangeRate-API",
-      realTimeUpdate: "Updates every minute",
-      formulaTitle: "Formula",
-      dataSource: "Data Source",
-      calculationMethod: "Method",
-      importantNote: "Note:",
-      noteText: "Prices may vary by location.",
-      liveData: "Live data",
-      perGram: "per gram",
-      fullname: "Full Name (French)",
-      username: "Username",
-      wilaya: "Wilaya (2 digits)",
-      email: "Email",
-      password: "Password",
-      save: "Save",
-      login: "Login",
-      register: "Register",
-      account: "Account",
-      balance: "Balance",
-      charge: "Charge Balance",
-      edit: "Edit Info",
-      logout: "Logout",
-      backToRegister: "Back to Register",
-      completeProfile: "Complete Profile",
-      memberNumber: "Member #",
-      showLogin: "Login",
-      upgradeCard: "Upgrade Card",
-      cardHolder: "Card Holder",
-      validThru: "Valid Thru",
-      loading: "Loading...",
-    },
+      title: 'E-Sekoir',
+      subtitle: 'Complete Exchange Platform',
+      search: 'Search...',
+      calculator: 'Calculator',
+      categories: { all: 'All', currency: 'Currencies', crypto: 'Crypto', gold: 'Gold', transfer: 'Transfer' },
+      popular: 'Most Traded',
+      noResults: 'No Results',
+      tryAgain: 'Try different keywords',
+      officialBank: 'Official Bank',
+      squareBuy: 'Square Buy',
+      squareSell: 'Square Sell',
+      change24h: '24h Change',
+      priceInDZD: 'Price in DZD',
+      priceInUSD: 'Price in USD',
+      buy: 'Buy',
+      sell: 'Sell',
+      fees: 'Fees',
+      speed: 'Speed',
+      rating: 'Rating',
+      amount: 'Amount',
+      from: 'From',
+      to: 'To',
+      result: 'Result',
+      estimate: '* Est. prices',
+      favorites: 'Favorites',
+      download: 'Download',
+      priceExplanation: 'How We Calculate?',
+      priceStep1: 'Official Rate from API',
+      priceStep2: 'Square = Official × 1.85',
+      priceStep3: 'Buy = -2.7%',
+      priceStep4: 'Sell = +2.7%',
+      priceStep5: 'Diff 5.4% = Commission',
+      apiSource: 'Source: ExchangeRate-API',
+      realTimeUpdate: 'Updates every minute',
+      formulaTitle: 'Formula',
+      dataSource: 'Data Source',
+      calculationMethod: 'Method',
+      importantNote: 'Note:',
+      noteText: 'Prices may vary by location.',
+      liveData: 'Live data',
+      perGram: 'per gram',
+      fullname: 'Full Name (French)',
+      username: 'Username',
+      wilaya: 'Wilaya (2 digits)',
+      email: 'Email',
+      password: 'Password',
+      save: 'Save',
+      login: 'Login',
+      register: 'Register',
+      account: 'Account',
+      balance: 'Balance',
+      charge: 'Charge Balance',
+      edit: 'Edit Info',
+      logout: 'Logout',
+      backToRegister: 'Back to Register',
+      completeProfile: 'Complete Profile',
+      memberNumber: 'Member #',
+      showLogin: 'Login',
+      upgradeCard: 'Upgrade Card',
+      cardHolder: 'Card Holder',
+      validThru: 'Valid Thru',
+      loading: 'Loading...'
+    }
   };
 
   const t = translations[language];
 
   // Load user data from Supabase Auth
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setAuthUser(session?.user ?? null);
       if (session?.user) {
         setTimeout(() => {
@@ -227,9 +209,9 @@ const Index = () => {
         }, 0);
       } else {
         setRegistered(false);
-        setCurrentView("register");
-        setGlobalName("");
-        setUserWilaya("");
+        setCurrentView('register');
+        setGlobalName('');
+        setUserWilaya('');
         setMemberNumber(null);
         setBalanceAmount(0);
         setNeedsProfileCompletion(false);
@@ -247,42 +229,46 @@ const Index = () => {
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
-    const { data } = await supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle();
-
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
     if (data) {
       // Check if profile needs completion (missing wilaya or full_name)
       if (!data.wilaya || !data.full_name) {
         setNeedsProfileCompletion(true);
-        setCurrentView("completeProfile");
-        setFlippedCards((prev) => ({ ...prev, main: true }));
+        setCurrentView('completeProfile');
+        setFlippedCards(prev => ({ ...prev, main: true }));
         // Pre-fill with any existing data
         setCompleteProfileData({
-          fullname: data.full_name || "",
-          username: data.username || "",
-          wilaya: data.wilaya || "",
+          fullname: data.full_name || '',
+          username: data.username || '',
+          wilaya: data.wilaya || ''
         });
       } else {
         setNeedsProfileCompletion(false);
         setRegistered(true);
-        setCurrentView("account");
+        setCurrentView('account');
       }
-      setGlobalName(data.full_name || "");
-      setUserWilaya(data.wilaya || "");
+      setGlobalName(data.full_name || '');
+      setUserWilaya(data.wilaya || '');
       setMemberNumber(data.member_number || null);
     } else {
       // New user from Google - needs profile completion
       setNeedsProfileCompletion(true);
-      setCurrentView("completeProfile");
-      setFlippedCards((prev) => ({ ...prev, main: true }));
+      setCurrentView('completeProfile');
+      setFlippedCards(prev => ({ ...prev, main: true }));
     }
   };
 
   // Load dark mode preference
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem("darkMode") === "true";
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
     setDarkMode(savedDarkMode);
     if (savedDarkMode) {
-      document.documentElement.classList.add("dark");
+      document.documentElement.classList.add('dark');
     }
   }, []);
 
@@ -294,7 +280,7 @@ const Index = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const currencyResponse = await fetch("https://api.exchangerate-api.com/v4/latest/DZD");
+      const currencyResponse = await fetch('https://api.exchangerate-api.com/v4/latest/DZD');
       const currencyData = await currencyResponse.json();
       setRates({ currencies: currencyData.rates });
       setLastUpdate(new Date());
@@ -308,20 +294,20 @@ const Index = () => {
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
-    localStorage.setItem("darkMode", newDarkMode.toString());
+    localStorage.setItem('darkMode', newDarkMode.toString());
     if (newDarkMode) {
-      document.documentElement.classList.add("dark");
+      document.documentElement.classList.add('dark');
     } else {
-      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.remove('dark');
     }
   };
 
   const getSquareRate = (officialRate: number) => Math.round(officialRate * 1.85);
-  const getSquareBuyRate = (officialRate: number) => Math.round(officialRate * 1.8);
-  const getSquareSellRate = (officialRate: number) => Math.round(officialRate * 1.9);
+  const getSquareBuyRate = (officialRate: number) => Math.round(officialRate * 1.80);
+  const getSquareSellRate = (officialRate: number) => Math.round(officialRate * 1.90);
 
   const toggleFavorite = (itemId: string) => {
-    setFavorites((prev) => (prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]));
+    setFavorites(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
   };
 
   // Download card as image function
@@ -331,24 +317,24 @@ const Index = () => {
 
     try {
       const canvas = await html2canvas(cardElement, {
-        backgroundColor: darkMode ? "#1f2937" : "#ffffff",
+        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
         scale: 2,
         useCORS: true,
         allowTaint: true,
       });
 
-      const link = document.createElement("a");
-      link.download = `${cardName}-${new Date().toLocaleDateString("en-US").replace(/\//g, "-")}.png`;
-      link.href = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.download = `${cardName}-${new Date().toLocaleDateString('en-US').replace(/\//g, '-')}.png`;
+      link.href = canvas.toDataURL('image/png');
       link.click();
 
       toast({
-        title: language === "ar" ? "تم تحميل الصورة بنجاح!" : "Image downloaded successfully!",
+        title: language === 'ar' ? 'تم تحميل الصورة بنجاح!' : 'Image downloaded successfully!',
       });
     } catch (error) {
       toast({
-        title: language === "ar" ? "حدث خطأ أثناء التحميل" : "Error downloading image",
-        variant: "destructive",
+        title: language === 'ar' ? 'حدث خطأ أثناء التحميل' : 'Error downloading image',
+        variant: 'destructive',
       });
     }
   };
@@ -359,51 +345,51 @@ const Index = () => {
       card2: false,
       card3: false,
       card4: false,
-      card5: false,
+      card5: false
     });
 
     setTimeout(() => {
-      setFlippedCards((prev) => ({ ...prev, [cardId]: !prev[cardId] }));
+      setFlippedCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
     }, 50);
   };
 
   const handleFormChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setFormError("");
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormError('');
   };
 
   const handleLoginChange = (field: string, value: string) => {
-    setLoginData((prev) => ({ ...prev, [field]: value }));
-    setLoginError("");
+    setLoginData(prev => ({ ...prev, [field]: value }));
+    setLoginError('');
   };
 
   const handleCompleteProfileChange = (field: string, value: string) => {
-    setCompleteProfileData((prev) => ({ ...prev, [field]: value }));
-    setCompleteProfileError("");
+    setCompleteProfileData(prev => ({ ...prev, [field]: value }));
+    setCompleteProfileError('');
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError("");
+    setFormError('');
     setAuthLoading(true);
 
     if (!/^[A-Za-zÀ-ÖØ-öø-ÿŒœ\s]+$/.test(formData.fullname)) {
-      setFormError(language === "ar" ? "الاسم يجب أن يكون بالحروف الفرنسية" : "Name must be in French letters");
+      setFormError(language === 'ar' ? 'الاسم يجب أن يكون بالحروف الفرنسية' : 'Name must be in French letters');
       setAuthLoading(false);
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(formData.username) || formData.username.length < 3) {
-      setFormError(language === "ar" ? "اسم المستخدم غير صالح (3 أحرف على الأقل)" : "Invalid username (min 3 chars)");
+      setFormError(language === 'ar' ? 'اسم المستخدم غير صالح (3 أحرف على الأقل)' : 'Invalid username (min 3 chars)');
       setAuthLoading(false);
       return;
     }
     if (!/^\d{2}$/.test(formData.wilaya)) {
-      setFormError(language === "ar" ? "رقم الولاية غير صحيح (رقمين)" : "Invalid wilaya (2 digits)");
+      setFormError(language === 'ar' ? 'رقم الولاية غير صحيح (رقمين)' : 'Invalid wilaya (2 digits)');
       setAuthLoading(false);
       return;
     }
     if (!formData.email || !formData.password) {
-      setFormError(language === "ar" ? "البريد وكلمة المرور مطلوبان" : "Email and password required");
+      setFormError(language === 'ar' ? 'البريد وكلمة المرور مطلوبان' : 'Email and password required');
       setAuthLoading(false);
       return;
     }
@@ -418,36 +404,33 @@ const Index = () => {
             full_name: formData.fullname,
             username: formData.username,
             wilaya: formData.wilaya,
-            avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(formData.fullname)}`,
-          },
-        },
+            avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(formData.fullname)}`
+          }
+        }
       });
 
       if (error) {
-        if (error.message.includes("already registered")) {
-          setFormError(language === "ar" ? "هذا البريد مسجل مسبقاً" : "Email already registered");
+        if (error.message.includes('already registered')) {
+          setFormError(language === 'ar' ? 'هذا البريد مسجل مسبقاً' : 'Email already registered');
         } else {
           setFormError(error.message);
         }
       } else if (data.user) {
         // Update profile with username and wilaya
-        await supabase
-          .from("profiles")
-          .update({
-            full_name: formData.fullname,
-            username: formData.username,
-            wilaya: formData.wilaya,
-          })
-          .eq("user_id", data.user.id);
-
+        await supabase.from('profiles').update({ 
+          full_name: formData.fullname,
+          username: formData.username,
+          wilaya: formData.wilaya 
+        }).eq('user_id', data.user.id);
+        
         setGlobalName(formData.fullname);
         setUserWilaya(formData.wilaya);
         toast({
-          title: language === "ar" ? "تم إنشاء الحساب بنجاح!" : "Account created successfully!",
+          title: language === 'ar' ? 'تم إنشاء الحساب بنجاح!' : 'Account created successfully!',
         });
       }
     } catch (error) {
-      setFormError(language === "ar" ? "حدث خطأ" : "An error occurred");
+      setFormError(language === 'ar' ? 'حدث خطأ' : 'An error occurred');
     } finally {
       setAuthLoading(false);
     }
@@ -455,28 +438,28 @@ const Index = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginError("");
+    setLoginError('');
     setAuthLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: loginData.loginUser,
-        password: loginData.loginPass,
+        password: loginData.loginPass
       });
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          setLoginError(language === "ar" ? "البريد أو كلمة المرور غير صحيحة" : "Invalid credentials");
+        if (error.message.includes('Invalid login credentials')) {
+          setLoginError(language === 'ar' ? 'البريد أو كلمة المرور غير صحيحة' : 'Invalid credentials');
         } else {
           setLoginError(error.message);
         }
       } else {
         toast({
-          title: language === "ar" ? "مرحباً بك!" : "Welcome back!",
+          title: language === 'ar' ? 'مرحباً بك!' : 'Welcome back!',
         });
       }
     } catch (error) {
-      setLoginError(language === "ar" ? "حدث خطأ" : "An error occurred");
+      setLoginError(language === 'ar' ? 'حدث خطأ' : 'An error occurred');
     } finally {
       setAuthLoading(false);
     }
@@ -486,15 +469,15 @@ const Index = () => {
     setAuthLoading(true);
     try {
       await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+          redirectTo: `${window.location.origin}/`
+        }
       });
     } catch (error) {
       toast({
-        title: language === "ar" ? "حدث خطأ" : "An error occurred",
-        variant: "destructive",
+        title: language === 'ar' ? 'حدث خطأ' : 'An error occurred',
+        variant: 'destructive'
       });
     } finally {
       setAuthLoading(false);
@@ -502,12 +485,12 @@ const Index = () => {
   };
 
   const handleCharge = () => {
-    const amount = prompt(language === "ar" ? "أدخل مبلغ الشحن (€):" : "Enter charge amount (€):", "10");
+    const amount = prompt(language === 'ar' ? "أدخل مبلغ الشحن (€):" : "Enter charge amount (€):", "10");
     if (amount && !isNaN(Number(amount))) {
       const newBalance = balanceAmount + parseFloat(amount);
       setBalanceAmount(newBalance);
       toast({
-        title: `✅ ${language === "ar" ? "تم شحن" : "Charged"} ${amount} €`,
+        title: `✅ ${language === 'ar' ? 'تم شحن' : 'Charged'} ${amount} €`,
       });
     }
   };
@@ -515,46 +498,42 @@ const Index = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setRegistered(false);
-    setCurrentView("register");
-    setGlobalName("");
-    setUserWilaya("");
+    setCurrentView('register');
+    setGlobalName('');
+    setUserWilaya('');
     setMemberNumber(null);
     setBalanceAmount(0);
     setNeedsProfileCompletion(false);
-    setFormData({ fullname: "", username: "", wilaya: "", email: "", password: "" });
-    setLoginData({ loginUser: "", loginPass: "" });
-    setCompleteProfileData({ fullname: "", username: "", wilaya: "" });
+    setFormData({ fullname: '', username: '', wilaya: '', email: '', password: '' });
+    setLoginData({ loginUser: '', loginPass: '' });
+    setCompleteProfileData({ fullname: '', username: '', wilaya: '' });
     setFlippedCards({ main: false, card2: false, card3: false, card4: false, card5: false });
   };
 
   // Handle complete profile for Google users
   const handleCompleteProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCompleteProfileError("");
+    setCompleteProfileError('');
     setAuthLoading(true);
 
     if (!authUser) {
-      setCompleteProfileError(language === "ar" ? "خطأ في المصادقة" : "Auth error");
+      setCompleteProfileError(language === 'ar' ? 'خطأ في المصادقة' : 'Auth error');
       setAuthLoading(false);
       return;
     }
 
     if (!/^[A-Za-zÀ-ÖØ-öø-ÿŒœ\s]+$/.test(completeProfileData.fullname)) {
-      setCompleteProfileError(
-        language === "ar" ? "الاسم يجب أن يكون بالحروف الفرنسية" : "Name must be in French letters",
-      );
+      setCompleteProfileError(language === 'ar' ? 'الاسم يجب أن يكون بالحروف الفرنسية' : 'Name must be in French letters');
       setAuthLoading(false);
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(completeProfileData.username) || completeProfileData.username.length < 3) {
-      setCompleteProfileError(
-        language === "ar" ? "اسم المستخدم غير صالح (3 أحرف على الأقل)" : "Invalid username (min 3 chars)",
-      );
+      setCompleteProfileError(language === 'ar' ? 'اسم المستخدم غير صالح (3 أحرف على الأقل)' : 'Invalid username (min 3 chars)');
       setAuthLoading(false);
       return;
     }
     if (!/^\d{2}$/.test(completeProfileData.wilaya)) {
-      setCompleteProfileError(language === "ar" ? "رقم الولاية غير صحيح (رقمين)" : "Invalid wilaya (2 digits)");
+      setCompleteProfileError(language === 'ar' ? 'رقم الولاية غير صحيح (رقمين)' : 'Invalid wilaya (2 digits)');
       setAuthLoading(false);
       return;
     }
@@ -562,34 +541,29 @@ const Index = () => {
     try {
       // Check if username is taken
       const { data: existingUser } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", completeProfileData.username)
-        .neq("user_id", authUser.id)
+        .from('profiles')
+        .select('id')
+        .eq('username', completeProfileData.username)
+        .neq('user_id', authUser.id)
         .maybeSingle();
 
       if (existingUser) {
-        setCompleteProfileError(language === "ar" ? "اسم المستخدم مستخدم بالفعل" : "Username already taken");
+        setCompleteProfileError(language === 'ar' ? 'اسم المستخدم مستخدم بالفعل' : 'Username already taken');
         setAuthLoading(false);
         return;
       }
 
-      const { error } = await supabase.from("profiles").upsert(
-        {
-          user_id: authUser.id,
-          full_name: completeProfileData.fullname,
-          username: completeProfileData.username,
-          wilaya: completeProfileData.wilaya,
-          avatar_url:
-            authUser.user_metadata?.avatar_url ||
-            `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(completeProfileData.fullname)}`,
-        },
-        { onConflict: "user_id" },
-      );
+      const { error } = await supabase.from('profiles').upsert({
+        user_id: authUser.id,
+        full_name: completeProfileData.fullname,
+        username: completeProfileData.username,
+        wilaya: completeProfileData.wilaya,
+        avatar_url: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(completeProfileData.fullname)}`
+      }, { onConflict: 'user_id' });
 
       if (error) {
-        if (error.message.includes("duplicate key") && error.message.includes("username")) {
-          setCompleteProfileError(language === "ar" ? "اسم المستخدم مستخدم بالفعل" : "Username already taken");
+        if (error.message.includes('duplicate key') && error.message.includes('username')) {
+          setCompleteProfileError(language === 'ar' ? 'اسم المستخدم مستخدم بالفعل' : 'Username already taken');
         } else {
           setCompleteProfileError(error.message);
         }
@@ -598,36 +572,36 @@ const Index = () => {
         setUserWilaya(completeProfileData.wilaya);
         setNeedsProfileCompletion(false);
         setRegistered(true);
-        setCurrentView("account");
+        setCurrentView('account');
         // Refetch to get member_number
         fetchUserProfile(authUser.id);
         toast({
-          title: language === "ar" ? "تم حفظ البيانات بنجاح!" : "Profile saved successfully!",
+          title: language === 'ar' ? 'تم حفظ البيانات بنجاح!' : 'Profile saved successfully!',
         });
       }
     } catch (error) {
-      setCompleteProfileError(language === "ar" ? "حدث خطأ" : "An error occurred");
+      setCompleteProfileError(language === 'ar' ? 'حدث خطأ' : 'An error occurred');
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const getCardNumber = (wilaya: string = "16", memNum: number | null = null) => {
+  const getCardNumber = (wilaya: string = '16', memNum: number | null = null) => {
     const year = new Date().getFullYear();
-    const wilayaFormatted = wilaya.padStart(2, "0");
-    const memberFormatted = memNum ? memNum.toString().padStart(4, "0") : "0001";
+    const wilayaFormatted = wilaya.padStart(2, '0');
+    const memberFormatted = memNum ? memNum.toString().padStart(4, '0') : '0001';
     return `${year} ${wilayaFormatted}00 0000 ${memberFormatted}`;
   };
 
   const formatNumber = (num: number) => {
-    return new Intl.NumberFormat("en-US").format(num);
+    return new Intl.NumberFormat('en-US').format(num);
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString(language === "ar" ? "ar-DZ" : "en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
+    return date.toLocaleTimeString(language === 'ar' ? 'ar-DZ' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
     });
   };
 
@@ -635,250 +609,105 @@ const Index = () => {
     if (!rates) return 0;
     let result = calcAmount;
 
-    if (calcFrom === "dzd") {
-      if (calcTo === "eur") result = calcAmount * (rates.currencies.EUR || 0.00665);
-      else if (calcTo === "usd") result = calcAmount * (rates.currencies.USD || 0.00729);
-      else if (calcTo === "gbp") result = calcAmount * (rates.currencies.GBP || 0.00577);
-    } else if (calcTo === "dzd") {
-      if (calcFrom === "eur") result = calcAmount / (rates.currencies.EUR || 0.00665);
-      else if (calcFrom === "usd") result = calcAmount / (rates.currencies.USD || 0.00729);
-      else if (calcFrom === "gbp") result = calcAmount / (rates.currencies.GBP || 0.00577);
+    if (calcFrom === 'dzd') {
+      if (calcTo === 'eur') result = calcAmount * (rates.currencies.EUR || 0.00665);
+      else if (calcTo === 'usd') result = calcAmount * (rates.currencies.USD || 0.00729);
+      else if (calcTo === 'gbp') result = calcAmount * (rates.currencies.GBP || 0.00577);
+    } else if (calcTo === 'dzd') {
+      if (calcFrom === 'eur') result = calcAmount / (rates.currencies.EUR || 0.00665);
+      else if (calcFrom === 'usd') result = calcAmount / (rates.currencies.USD || 0.00729);
+      else if (calcFrom === 'gbp') result = calcAmount / (rates.currencies.GBP || 0.00577);
     }
 
     return result;
   };
 
   // Exchange data
-  const exchangeData = rates
-    ? {
-        currencies: [
-          {
-            id: "eur",
-            name: language === "ar" ? "اليورو" : "Euro",
-            symbol: "EUR",
-            icon: "fa-euro-sign",
-            category: "currency",
-            official: Math.round(1 / rates.currencies.EUR),
-            square: getSquareRate(Math.round(1 / rates.currencies.EUR)),
-            squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.EUR)),
-            squareSell: getSquareSellRate(Math.round(1 / rates.currencies.EUR)),
-            change24h: +(Math.random() * 2 - 1).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "usd",
-            name: language === "ar" ? "الدولار" : "US Dollar",
-            symbol: "USD",
-            icon: "fa-dollar-sign",
-            category: "currency",
-            official: Math.round(1 / rates.currencies.USD),
-            square: getSquareRate(Math.round(1 / rates.currencies.USD)),
-            squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.USD)),
-            squareSell: getSquareSellRate(Math.round(1 / rates.currencies.USD)),
-            change24h: +(Math.random() * 2 - 1).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "gbp",
-            name: language === "ar" ? "الجنيه" : "Pound",
-            symbol: "GBP",
-            icon: "fa-sterling-sign",
-            category: "currency",
-            official: Math.round(1 / rates.currencies.GBP),
-            square: getSquareRate(Math.round(1 / rates.currencies.GBP)),
-            squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.GBP)),
-            squareSell: getSquareSellRate(Math.round(1 / rates.currencies.GBP)),
-            change24h: +(Math.random() * 2 - 1).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "cad",
-            name: language === "ar" ? "الكندي" : "Canadian",
-            symbol: "CAD",
-            icon: "fa-canadian-maple-leaf",
-            category: "currency",
-            official: Math.round(1 / rates.currencies.CAD),
-            square: getSquareRate(Math.round(1 / rates.currencies.CAD)),
-            squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.CAD)),
-            squareSell: getSquareSellRate(Math.round(1 / rates.currencies.CAD)),
-            change24h: +(Math.random() * 2 - 1).toFixed(2),
-            popular: false,
-          },
-          {
-            id: "try",
-            name: language === "ar" ? "الليرة التركية" : "Turkish Lira",
-            symbol: "TRY",
-            icon: "fa-lira-sign",
-            category: "currency",
-            official: Math.round(1 / rates.currencies.TRY),
-            square: getSquareRate(Math.round(1 / rates.currencies.TRY)),
-            squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.TRY)),
-            squareSell: getSquareSellRate(Math.round(1 / rates.currencies.TRY)),
-            change24h: +(Math.random() * 2 - 1).toFixed(2),
-            popular: false,
-          },
-          {
-            id: "aed",
-            name: language === "ar" ? "الدرهم الإماراتي" : "UAE Dirham",
-            symbol: "AED",
-            icon: "fa-coins",
-            category: "currency",
-            official: Math.round(1 / rates.currencies.AED),
-            square: getSquareRate(Math.round(1 / rates.currencies.AED)),
-            squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.AED)),
-            squareSell: getSquareSellRate(Math.round(1 / rates.currencies.AED)),
-            change24h: +(Math.random() * 2 - 1).toFixed(2),
-            popular: false,
-          },
-        ],
-        crypto: [
-          {
-            id: "btc",
-            name: "Bitcoin",
-            symbol: "BTC",
-            icon: "fa-bitcoin-sign",
-            category: "crypto",
-            price: { dzd: 12500000, usd: 95000 },
-            change24h: +(Math.random() * 10 - 5).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "eth",
-            name: "Ethereum",
-            symbol: "ETH",
-            icon: "fa-ethereum",
-            category: "crypto",
-            price: { dzd: 450000, usd: 3400 },
-            change24h: +(Math.random() * 10 - 5).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "usdt",
-            name: "Tether",
-            symbol: "USDT",
-            icon: "fa-dollar-sign",
-            category: "crypto",
-            price: { dzd: 137, usd: 1 },
-            change24h: +(Math.random() * 0.5 - 0.25).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "bnb",
-            name: "Binance Coin",
-            symbol: "BNB",
-            icon: "fa-coins",
-            category: "crypto",
-            price: { dzd: 85000, usd: 650 },
-            change24h: +(Math.random() * 8 - 4).toFixed(2),
-            popular: false,
-          },
-        ],
-        gold: [
-          {
-            id: "gold24",
-            name: language === "ar" ? "ذهب 24 قيراط" : "Gold 24K",
-            symbol: "24K",
-            icon: "fa-coins",
-            category: "gold",
-            buy: 15500,
-            change24h: +(Math.random() * 2).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "gold21",
-            name: language === "ar" ? "ذهب 21 قيراط" : "Gold 21K",
-            symbol: "21K",
-            icon: "fa-coins",
-            category: "gold",
-            buy: 13500,
-            change24h: +(Math.random() * 2).toFixed(2),
-            popular: true,
-          },
-          {
-            id: "gold18",
-            name: language === "ar" ? "ذهب 18 قيراط" : "Gold 18K",
-            symbol: "18K",
-            icon: "fa-coins",
-            category: "gold",
-            buy: 11500,
-            change24h: +(Math.random() * 2).toFixed(2),
-            popular: false,
-          },
-        ],
-        transfer: [
-          {
-            id: "paysera",
-            name: "Paysera",
-            symbol: "EUR",
-            icon: "fa-credit-card",
-            category: "transfer",
-            buy: 245,
-            sell: 250,
-            fees: "0.5%",
-            speed: language === "ar" ? "فوري" : "Instant",
-            rating: 4.8,
-          },
-          {
-            id: "wise",
-            name: "Wise",
-            symbol: "EUR",
-            icon: "fa-globe",
-            category: "transfer",
-            buy: 243,
-            sell: 248,
-            fees: "0.7%",
-            speed: language === "ar" ? "1-2 يوم" : "1-2 days",
-            rating: 4.7,
-          },
-          {
-            id: "paypal",
-            name: "PayPal",
-            symbol: "USD",
-            icon: "fa-paypal",
-            category: "transfer",
-            buy: 200,
-            sell: 205,
-            fees: "2.5%",
-            speed: language === "ar" ? "فوري" : "Instant",
-            rating: 4.5,
-          },
-          {
-            id: "skrill",
-            name: "Skrill",
-            symbol: "EUR",
-            icon: "fa-wallet",
-            category: "transfer",
-            buy: 240,
-            sell: 245,
-            fees: "1.5%",
-            speed: language === "ar" ? "فوري" : "Instant",
-            rating: 4.3,
-          },
-        ],
-      }
-    : null;
+  const exchangeData = rates ? {
+    currencies: [
+      { id: 'eur', name: language === 'ar' ? 'اليورو' : 'Euro', symbol: 'EUR', icon: 'fa-euro-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.EUR),
+        square: getSquareRate(Math.round(1 / rates.currencies.EUR)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.EUR)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.EUR)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
+      { id: 'usd', name: language === 'ar' ? 'الدولار' : 'US Dollar', symbol: 'USD', icon: 'fa-dollar-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.USD),
+        square: getSquareRate(Math.round(1 / rates.currencies.USD)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.USD)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.USD)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
+      { id: 'gbp', name: language === 'ar' ? 'الجنيه' : 'Pound', symbol: 'GBP', icon: 'fa-sterling-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.GBP),
+        square: getSquareRate(Math.round(1 / rates.currencies.GBP)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.GBP)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.GBP)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
+      { id: 'cad', name: language === 'ar' ? 'الكندي' : 'Canadian', symbol: 'CAD', icon: 'fa-canadian-maple-leaf', category: 'currency',
+        official: Math.round(1 / rates.currencies.CAD),
+        square: getSquareRate(Math.round(1 / rates.currencies.CAD)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.CAD)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.CAD)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false },
+      { id: 'try', name: language === 'ar' ? 'الليرة التركية' : 'Turkish Lira', symbol: 'TRY', icon: 'fa-lira-sign', category: 'currency',
+        official: Math.round(1 / rates.currencies.TRY),
+        square: getSquareRate(Math.round(1 / rates.currencies.TRY)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.TRY)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.TRY)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false },
+      { id: 'aed', name: language === 'ar' ? 'الدرهم الإماراتي' : 'UAE Dirham', symbol: 'AED', icon: 'fa-coins', category: 'currency',
+        official: Math.round(1 / rates.currencies.AED),
+        square: getSquareRate(Math.round(1 / rates.currencies.AED)),
+        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.AED)),
+        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.AED)),
+        change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false }
+    ],
+    crypto: [
+      { id: 'btc', name: 'Bitcoin', symbol: 'BTC', icon: 'fa-bitcoin-sign', category: 'crypto',
+        price: { dzd: 12500000, usd: 95000 },
+        change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
+      { id: 'eth', name: 'Ethereum', symbol: 'ETH', icon: 'fa-ethereum', category: 'crypto',
+        price: { dzd: 450000, usd: 3400 },
+        change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
+      { id: 'usdt', name: 'Tether', symbol: 'USDT', icon: 'fa-dollar-sign', category: 'crypto',
+        price: { dzd: 137, usd: 1 },
+        change24h: +(Math.random() * 0.5 - 0.25).toFixed(2), popular: true },
+      { id: 'bnb', name: 'Binance Coin', symbol: 'BNB', icon: 'fa-coins', category: 'crypto',
+        price: { dzd: 85000, usd: 650 },
+        change24h: +(Math.random() * 8 - 4).toFixed(2), popular: false }
+    ],
+    gold: [
+      { id: 'gold24', name: language === 'ar' ? 'ذهب 24 قيراط' : 'Gold 24K', symbol: '24K', icon: 'fa-coins', category: 'gold', buy: 15500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
+      { id: 'gold21', name: language === 'ar' ? 'ذهب 21 قيراط' : 'Gold 21K', symbol: '21K', icon: 'fa-coins', category: 'gold', buy: 13500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
+      { id: 'gold18', name: language === 'ar' ? 'ذهب 18 قيراط' : 'Gold 18K', symbol: '18K', icon: 'fa-coins', category: 'gold', buy: 11500, change24h: +(Math.random() * 2).toFixed(2), popular: false }
+    ],
+    transfer: [
+      { id: 'paysera', name: 'Paysera', symbol: 'EUR', icon: 'fa-credit-card', category: 'transfer', buy: 245, sell: 250, fees: '0.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.8 },
+      { id: 'wise', name: 'Wise', symbol: 'EUR', icon: 'fa-globe', category: 'transfer', buy: 243, sell: 248, fees: '0.7%', speed: language === 'ar' ? '1-2 يوم' : '1-2 days', rating: 4.7 },
+      { id: 'paypal', name: 'PayPal', symbol: 'USD', icon: 'fa-paypal', category: 'transfer', buy: 200, sell: 205, fees: '2.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.5 },
+      { id: 'skrill', name: 'Skrill', symbol: 'EUR', icon: 'fa-wallet', category: 'transfer', buy: 240, sell: 245, fees: '1.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.3 }
+    ]
+  } : null;
 
   // Filter data
   const getAllItems = () => {
     if (!exchangeData) return [];
-    const all = [...exchangeData.currencies, ...exchangeData.crypto, ...exchangeData.gold, ...exchangeData.transfer];
-    return all.filter((item) => {
-      const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
-      const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const all = [
+      ...exchangeData.currencies,
+      ...exchangeData.crypto,
+      ...exchangeData.gold,
+      ...exchangeData.transfer
+    ];
+    return all.filter(item => {
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.symbol.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   };
 
   // Enhanced Bank Card Component
-  const EnhancedBankCard = ({
-    cardId,
-    title,
-    gradient,
-    cardNumber,
-    isMain = false,
-  }: {
+  const EnhancedBankCard = ({ cardId, title, gradient, cardNumber, isMain = false }: {
     cardId: string;
     title: string;
     gradient: string;
@@ -886,7 +715,7 @@ const Index = () => {
     isMain?: boolean;
   }) => {
     const isFlipped = flippedCards[cardId as keyof typeof flippedCards];
-    const displayName = registered && globalName ? globalName.toUpperCase() : "E-SEKOIR USER";
+    const displayName = registered && globalName ? globalName.toUpperCase() : 'E-SEKOIR USER';
     const displayCardNumber = registered && userWilaya ? getCardNumber(userWilaya, memberNumber) : cardNumber;
 
     const handleCardClick = () => {
@@ -903,11 +732,14 @@ const Index = () => {
 
     return (
       <div className="card-3d-container" onClick={handleSimpleFlip}>
-        <div className={`card-3d ${isFlipped ? "flipped" : ""}`}>
-          <div className={`card-3d-face card-3d-front ${gradient}`} onClick={isMain ? handleCardClick : undefined}>
+        <div className={`card-3d ${isFlipped ? 'flipped' : ''}`}>
+          <div
+            className={`card-3d-face card-3d-front ${gradient}`}
+            onClick={isMain ? handleCardClick : undefined}
+          >
             <div className="text-2xl font-bold mb-3">{title}</div>
             <div className="card-chip"></div>
-            <div className="text-xl tracking-wider font-semibold" style={{ letterSpacing: "0.15em" }} dir="ltr">
+            <div className="text-xl tracking-wider font-semibold" style={{ letterSpacing: '0.15em' }} dir="ltr">
               {displayCardNumber}
             </div>
             <div className="flex justify-between items-end mt-4">
@@ -924,34 +756,32 @@ const Index = () => {
 
           <div
             className={`card-3d-face card-3d-back ${gradient}`}
-            onClick={(e) => {
-              if (!isMain) e.stopPropagation();
-            }}
+            onClick={(e) => { if (!isMain) e.stopPropagation(); }}
           >
             {isMain ? (
               <div className="card-scroll" onClick={(e) => e.stopPropagation()}>
-                {currentView === "register" && (
+                {currentView === 'register' && (
                   <form onSubmit={handleRegister} className="space-y-2">
                     <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
                     <input
                       type="text"
                       value={formData.fullname}
-                      onChange={(e) => handleFormChange("fullname", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleFormChange('fullname', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
-                      autoComplete="on"
-                      style={{ caretColor: "auto" }}
+                      autoComplete="off"
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.username}</label>
                     <input
                       type="text"
                       value={formData.username}
-                      onChange={(e) => handleFormChange("username", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleFormChange('username', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                       placeholder="user123"
                     />
 
@@ -960,11 +790,11 @@ const Index = () => {
                       type="text"
                       maxLength={2}
                       value={formData.wilaya}
-                      onChange={(e) => handleFormChange("wilaya", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleFormChange('wilaya', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                       placeholder="16"
                     />
 
@@ -972,34 +802,34 @@ const Index = () => {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleFormChange("email", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleFormChange('email', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
                     <input
                       type="password"
                       value={formData.password}
-                      onChange={(e) => handleFormChange("password", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleFormChange('password', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                     />
 
                     {formError && <div className="text-red-300 text-xs">{formError}</div>}
 
-                    <button
-                      type="submit"
+                    <button 
+                      type="submit" 
                       disabled={authLoading}
                       className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
                     >
-                      {authLoading ? "..." : language === "ar" ? "إنشاء حساب" : "Create Account"}
+                      {authLoading ? '...' : (language === 'ar' ? 'إنشاء حساب' : 'Create Account')}
                     </button>
-
+                    
                     <button
                       type="button"
                       onClick={handleGoogleLogin}
@@ -1009,10 +839,10 @@ const Index = () => {
                       <Chrome size={16} />
                       Google
                     </button>
-
+                    
                     <button
                       type="button"
-                      onClick={() => setCurrentView("login")}
+                      onClick={() => setCurrentView('login')}
                       className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
                     >
                       {t.showLogin}
@@ -1020,40 +850,40 @@ const Index = () => {
                   </form>
                 )}
 
-                {currentView === "login" && (
+                {currentView === 'login' && (
                   <form onSubmit={handleLogin} className="space-y-2">
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
                     <input
                       type="email"
                       value={loginData.loginUser}
-                      onChange={(e) => handleLoginChange("loginUser", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleLoginChange('loginUser', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.password}</label>
                     <input
                       type="password"
                       value={loginData.loginPass}
-                      onChange={(e) => handleLoginChange("loginPass", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleLoginChange('loginPass', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                     />
 
                     {loginError && <div className="text-red-300 text-xs">{loginError}</div>}
 
-                    <button
-                      type="submit"
+                    <button 
+                      type="submit" 
                       disabled={authLoading}
                       className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
                     >
-                      {authLoading ? "..." : t.login}
+                      {authLoading ? '...' : t.login}
                     </button>
-
+                    
                     <button
                       type="button"
                       onClick={handleGoogleLogin}
@@ -1063,10 +893,10 @@ const Index = () => {
                       <Chrome size={16} />
                       Google
                     </button>
-
+                    
                     <button
                       type="button"
-                      onClick={() => setCurrentView("register")}
+                      onClick={() => setCurrentView('register')}
                       className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
                     >
                       {t.backToRegister}
@@ -1074,32 +904,32 @@ const Index = () => {
                   </form>
                 )}
 
-                {currentView === "completeProfile" && (
+                {currentView === 'completeProfile' && (
                   <form onSubmit={handleCompleteProfile} className="space-y-2">
                     <div className="text-center mb-2">
                       <h3 className="text-sm font-bold">{t.completeProfile}</h3>
                     </div>
-
+                    
                     <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
                     <input
                       type="text"
                       value={completeProfileData.fullname}
-                      onChange={(e) => handleCompleteProfileChange("fullname", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleCompleteProfileChange('fullname', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.username}</label>
                     <input
                       type="text"
                       value={completeProfileData.username}
-                      onChange={(e) => handleCompleteProfileChange("username", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleCompleteProfileChange('username', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                       placeholder="user123"
                     />
 
@@ -1108,24 +938,24 @@ const Index = () => {
                       type="text"
                       maxLength={2}
                       value={completeProfileData.wilaya}
-                      onChange={(e) => handleCompleteProfileChange("wilaya", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? "bg-gray-700 text-white caret-white" : "bg-white text-gray-800 caret-gray-800"}`}
+                      onChange={(e) => handleCompleteProfileChange('wilaya', e.target.value)}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm caret-current ${darkMode ? 'bg-gray-700 text-white caret-white' : 'bg-white text-gray-800 caret-gray-800'}`}
                       required
                       autoComplete="off"
-                      style={{ caretColor: "auto" }}
+                      style={{ caretColor: 'auto' }}
                       placeholder="16"
                     />
 
                     {completeProfileError && <div className="text-red-300 text-xs">{completeProfileError}</div>}
 
-                    <button
-                      type="submit"
+                    <button 
+                      type="submit" 
                       disabled={authLoading}
                       className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
                     >
-                      {authLoading ? "..." : t.save}
+                      {authLoading ? '...' : t.save}
                     </button>
-
+                    
                     <button
                       type="button"
                       onClick={handleLogout}
@@ -1136,12 +966,10 @@ const Index = () => {
                   </form>
                 )}
 
-                {currentView === "account" && (
+                {currentView === 'account' && (
                   <div className="text-center space-y-3">
                     <h3 className="text-lg font-bold">{globalName}</h3>
-                    <div className="text-xs opacity-80">
-                      {t.memberNumber}: {memberNumber || "-"}
-                    </div>
+                    <div className="text-xs opacity-80">{t.memberNumber}: {memberNumber || '-'}</div>
                     <div className="text-sm opacity-90">{t.balance}</div>
                     <div className="text-3xl font-bold">{balanceAmount.toFixed(2)} €</div>
 
@@ -1182,14 +1010,14 @@ const Index = () => {
   // Ticker Component
   const PriceTicker = () => {
     if (!exchangeData) return null;
-
-    const tickerItems = exchangeData.currencies.map((c) => ({
+    
+    const tickerItems = exchangeData.currencies.map(c => ({
       symbol: c.symbol,
       name: c.name,
       official: c.official,
-      change: c.change24h,
+      change: c.change24h
     }));
-
+    
     const duplicatedItems = [...tickerItems, ...tickerItems];
 
     return (
@@ -1203,12 +1031,9 @@ const Index = () => {
               <span className="font-bold">{item.symbol}</span>
               <span className="text-emerald-200 text-sm">{item.name}</span>
               <span className="font-bold">{formatNumber(item.official)} DZD</span>
-              <span
-                className={`flex items-center gap-1 text-sm font-semibold ${item.change >= 0 ? "text-green-300" : "text-red-300"}`}
-              >
+              <span className={`flex items-center gap-1 text-sm font-semibold ${item.change >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                 {item.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {item.change >= 0 ? "+" : ""}
-                {item.change.toFixed(2)}%
+                {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
               </span>
             </div>
           ))}
@@ -1221,21 +1046,14 @@ const Index = () => {
   const renderItemCard = (item: any) => {
     const isFavorite = favorites.includes(item.id);
 
-    if (item.category === "currency") {
+    if (item.category === 'currency') {
       return (
-        <div
-          key={item.id}
-          id={`card-${item.id}`}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-gray-100 dark:border-gray-700 relative group glow-card"
-        >
+        <div key={item.id} id={`card-${item.id}`} className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-gray-100 dark:border-gray-700 relative group glow-card">
           <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={() => toggleFavorite(item.id)}>
-              <Heart
-                size={18}
-                className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"}
-              />
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
-            <button
+            <button 
               onClick={() => downloadCardAsImage(item.id, item.name)}
               className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
             >
@@ -1255,16 +1073,12 @@ const Index = () => {
           <div className="space-y-2">
             <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-2">
               <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold">{t.officialBank}</div>
-              <div className="text-xl font-bold text-blue-800 dark:text-blue-200">
-                {formatNumber(item.official)} DZD
-              </div>
+              <div className="text-xl font-bold text-blue-800 dark:text-blue-200">{formatNumber(item.official)} DZD</div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2">
                 <div className="text-xs text-green-600 dark:text-green-400 font-semibold">{t.squareBuy}</div>
-                <div className="text-lg font-bold text-green-800 dark:text-green-200">
-                  {formatNumber(item.squareBuy)}
-                </div>
+                <div className="text-lg font-bold text-green-800 dark:text-green-200">{formatNumber(item.squareBuy)}</div>
               </div>
               <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-2">
                 <div className="text-xs text-red-600 dark:text-red-400 font-semibold">{t.squareSell}</div>
@@ -1273,9 +1087,7 @@ const Index = () => {
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
               <span className="text-xs text-gray-500">{t.change24h}</span>
-              <span
-                className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? "text-green-600" : "text-red-600"}`}
-              >
+              <span className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {item.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 {Math.abs(item.change24h)}%
               </span>
@@ -1284,21 +1096,14 @@ const Index = () => {
           </div>
         </div>
       );
-    } else if (item.category === "crypto") {
+    } else if (item.category === 'crypto') {
       return (
-        <div
-          key={item.id}
-          id={`card-${item.id}`}
-          className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-purple-100 dark:border-purple-800 relative group glow-card"
-        >
+        <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-purple-100 dark:border-purple-800 relative group glow-card">
           <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={() => toggleFavorite(item.id)}>
-              <Heart
-                size={18}
-                className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"}
-              />
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
-            <button
+            <button 
               onClick={() => downloadCardAsImage(item.id, item.name)}
               className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
             >
@@ -1318,9 +1123,7 @@ const Index = () => {
           <div className="space-y-2">
             <div>
               <div className="text-xs text-purple-600 dark:text-purple-400 font-semibold">{t.priceInDZD}</div>
-              <div className="text-xl font-bold text-purple-800 dark:text-purple-200">
-                {formatNumber(item.price.dzd)} DZD
-              </div>
+              <div className="text-xl font-bold text-purple-800 dark:text-purple-200">{formatNumber(item.price.dzd)} DZD</div>
             </div>
             <div>
               <div className="text-xs text-blue-600 dark:text-blue-400 font-semibold">{t.priceInUSD}</div>
@@ -1328,9 +1131,7 @@ const Index = () => {
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-purple-100 dark:border-purple-700">
               <span className="text-xs text-gray-500">{t.change24h}</span>
-              <span
-                className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? "text-green-600" : "text-red-600"}`}
-              >
+              <span className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {item.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
                 {Math.abs(item.change24h)}%
               </span>
@@ -1339,21 +1140,14 @@ const Index = () => {
           </div>
         </div>
       );
-    } else if (item.category === "gold") {
+    } else if (item.category === 'gold') {
       return (
-        <div
-          key={item.id}
-          id={`card-${item.id}`}
-          className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-amber-200 dark:border-amber-700 relative group glow-card"
-        >
+        <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-amber-200 dark:border-amber-700 relative group glow-card">
           <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={() => toggleFavorite(item.id)}>
-              <Heart
-                size={18}
-                className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"}
-              />
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
-            <button
+            <button 
               onClick={() => downloadCardAsImage(item.id, item.name)}
               className="bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
             >
@@ -1377,9 +1171,7 @@ const Index = () => {
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-amber-200 dark:border-amber-700 mt-2">
             <span className="text-xs text-gray-600 dark:text-gray-400">{t.change24h}</span>
-            <span
-              className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? "text-green-600" : "text-red-600"}`}
-            >
+            <span className={`flex items-center gap-1 text-sm font-bold ${item.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {item.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
               {Math.abs(item.change24h)}%
             </span>
@@ -1387,21 +1179,14 @@ const Index = () => {
           <CommentSection currencyCode={item.id} language={language} />
         </div>
       );
-    } else if (item.category === "transfer") {
+    } else if (item.category === 'transfer') {
       return (
-        <div
-          key={item.id}
-          id={`card-${item.id}`}
-          className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-indigo-200 dark:border-indigo-700 relative group glow-card"
-        >
+        <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-indigo-200 dark:border-indigo-700 relative group glow-card">
           <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={() => toggleFavorite(item.id)}>
-              <Heart
-                size={18}
-                className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"}
-              />
+              <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
-            <button
+            <button 
               onClick={() => downloadCardAsImage(item.id, item.name)}
               className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
             >
@@ -1454,25 +1239,17 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${darkMode ? "dark bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50 to-emerald-50"}`}
-      >
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-br from-gray-50 via-blue-50 to-emerald-50'}`}>
         <div className="text-center">
-          <RefreshCw
-            className={`animate-spin mx-auto mb-4 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}
-            size={48}
-          />
-          <p className={`text-xl font-bold ${darkMode ? "text-gray-200" : "text-gray-700"}`}>{t.loading}</p>
+          <RefreshCw className={`animate-spin mx-auto mb-4 ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`} size={48} />
+          <p className={`text-xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{t.loading}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className={`min-h-screen ${darkMode ? "dark bg-gray-900" : "bg-gradient-to-br from-gray-50 via-blue-50 to-emerald-50"}`}
-      dir={language === "ar" ? "rtl" : "ltr"}
-    >
+    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-br from-gray-50 via-blue-50 to-emerald-50'}`} dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -1497,16 +1274,10 @@ const Index = () => {
               <button onClick={toggleDarkMode} className="bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-all">
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              <button
-                onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
-                className="bg-white/20 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-white/30 transition-all"
-              >
-                {language === "ar" ? "EN" : "عربي"}
+              <button onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')} className="bg-white/20 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-white/30 transition-all">
+                {language === 'ar' ? 'EN' : 'عربي'}
               </button>
-              <button
-                onClick={() => setShowCalculator(!showCalculator)}
-                className="bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-all"
-              >
+              <button onClick={() => setShowCalculator(!showCalculator)} className="bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-all">
                 <Calculator size={20} />
               </button>
             </div>
@@ -1533,23 +1304,17 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.amount}</label>
-                <input
-                  type="number"
-                  value={calcAmount === 0 ? "" : calcAmount}
-                  onChange={(e) => setCalcAmount(e.target.value === "" ? 0 : parseFloat(e.target.value))}
-                  onFocus={(e) => {
-                    if (calcAmount === 0) e.target.value = "";
-                  }}
-                  className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                <input 
+                  type="number" 
+                  value={calcAmount === 0 ? '' : calcAmount} 
+                  onChange={(e) => setCalcAmount(e.target.value === '' ? 0 : parseFloat(e.target.value))} 
+                  onFocus={(e) => { if (calcAmount === 0) e.target.value = ''; }}
+                  className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" 
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.from}</label>
-                <select
-                  value={calcFrom}
-                  onChange={(e) => setCalcFrom(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                >
+                <select value={calcFrom} onChange={(e) => setCalcFrom(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                   <option value="dzd">DZD</option>
                   <option value="eur">EUR</option>
                   <option value="usd">USD</option>
@@ -1558,11 +1323,7 @@ const Index = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.to}</label>
-                <select
-                  value={calcTo}
-                  onChange={(e) => setCalcTo(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                >
+                <select value={calcTo} onChange={(e) => setCalcTo(e.target.value)} className="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-emerald-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                   <option value="dzd">DZD</option>
                   <option value="eur">EUR</option>
                   <option value="usd">USD</option>
@@ -1584,10 +1345,7 @@ const Index = () => {
       <div className="container mx-auto px-4 py-6">
         {/* Bank Cards */}
         <div className="relative mb-6">
-          <div
-            ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4"
-          >
+          <div ref={scrollContainerRef} className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4">
             <EnhancedBankCard
               cardId="main"
               title="E-Sekoir"
@@ -1640,11 +1398,10 @@ const Index = () => {
                 <button
                   key={key}
                   onClick={() => setSelectedCategory(key)}
-                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${
-                    selectedCategory === key
-                      ? "bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                  }`}
+                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${selectedCategory === key
+                    ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-lg'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
                 >
                   {value}
                 </button>
@@ -1655,7 +1412,7 @@ const Index = () => {
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {getAllItems().map((item) => renderItemCard(item))}
+          {getAllItems().map(item => renderItemCard(item))}
         </div>
 
         {getAllItems().length === 0 && (
@@ -1701,9 +1458,7 @@ const Index = () => {
               <span className="text-xl font-bold">E-Sekoir</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">{t.subtitle}</p>
-            <p className="text-gray-500 text-xs">
-              © 2024 E-Sekoir. {language === "ar" ? "جميع الحقوق محفوظة" : "All rights reserved"}
-            </p>
+            <p className="text-gray-500 text-xs">© 2024 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
           </div>
         </div>
       </footer>

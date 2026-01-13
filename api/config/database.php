@@ -1,48 +1,28 @@
 <?php
 /**
- * E-Sekoir Database Configuration
- * ================================
- * 
- * غيّر القيم التالية حسب استضافتك
+ * Database Configuration
+ * Update these values with your hosting credentials
  */
 
-// ╔═══════════════════════════════════════════════════════════╗
-// ║              ⚙️ إعدادات قاعدة البيانات                     ║
-// ╚═══════════════════════════════════════════════════════════╝
-
-define('DB_HOST', 'localhost');              // عادة localhost
-define('DB_NAME', 'u752343995_caba');        // ← اسم قاعدة البيانات
-define('DB_USER', 'u752343995_dz');          // ← اسم مستخدم قاعدة البيانات  
-define('DB_PASS', 'YOUR_PASSWORD');          // ← ⚠️ كلمة مرور قاعدة البيانات
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'your_database_name');
+define('DB_USER', 'your_username');
+define('DB_PASS', 'your_password');
 define('DB_CHARSET', 'utf8mb4');
 
-// ╔═══════════════════════════════════════════════════════════╗
-// ║              🔐 إعدادات الأمان                             ║
-// ╚═══════════════════════════════════════════════════════════╝
+// JWT Secret Key - Change this to a random string!
+define('JWT_SECRET', 'your-secret-key-change-this-to-random-string');
 
-// مفتاح JWT - غيّره لنص عشوائي طويل (32 حرف على الأقل)
-define('JWT_SECRET', 'E-Sekoir-JWT-Secret-Key-2024-Change-This-To-Random-String');
+// Site URL
+define('SITE_URL', 'https://caba-dz.com');
 
-// ╔═══════════════════════════════════════════════════════════╗
-// ║              🌐 إعدادات الموقع                             ║
-// ╚═══════════════════════════════════════════════════════════╝
-
-// النطاقات المسموح بها للـ CORS - اتركها فارغة للسماح بأي دومين
-define('SITE_URL', '');
-
-// السماح بأي دومين (للاستخدام على عدة مواقع)
-define('ALLOW_ALL_ORIGINS', true);
-
-// ╔═══════════════════════════════════════════════════════════╗
-// ║              🔵 Google OAuth (اختياري)                     ║
-// ╚═══════════════════════════════════════════════════════════╝
-
-// للتسجيل بحساب جوجل - احصل عليه من Google Cloud Console
-define('GOOGLE_CLIENT_ID', '');
-
-// ═══════════════════════════════════════════════════════════
-// ⚠️ لا تعدّل أي شيء أسفل هذا الخط
-// ═══════════════════════════════════════════════════════════
+// CORS Settings
+define('ALLOWED_ORIGINS', [
+    'https://caba-dz.com',
+    'https://www.caba-dz.com',
+    'http://localhost:5173',
+    'http://localhost:3000'
+]);
 
 /**
  * Get PDO Database Connection
@@ -60,7 +40,7 @@ function getDB() {
             ]);
         } catch (PDOException $e) {
             http_response_code(500);
-            die(json_encode(['error' => 'Database connection failed', 'message' => $e->getMessage()]));
+            die(json_encode(['error' => 'Database connection failed']));
         }
     }
     
@@ -73,31 +53,23 @@ function getDB() {
 function setCORSHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     
-    // Allow all origins if configured
-    if (defined('ALLOW_ALL_ORIGINS') && ALLOW_ALL_ORIGINS) {
-        if (!empty($origin)) {
-            header("Access-Control-Allow-Origin: $origin");
-        } else {
-            header("Access-Control-Allow-Origin: *");
-        }
+    // Validate origin against whitelist
+    if (!empty($origin) && in_array($origin, ALLOWED_ORIGINS)) {
+        header("Access-Control-Allow-Origin: $origin");
+        header("Vary: Origin");
+    } else if (empty($origin)) {
+        // Allow same-origin requests (no Origin header)
+        header("Access-Control-Allow-Origin: " . SITE_URL);
     } else {
-        // Validate origin against whitelist
-        $allowedOrigins = defined('ALLOWED_ORIGINS') ? ALLOWED_ORIGINS : [];
-        if (!empty($origin) && in_array($origin, $allowedOrigins)) {
-            header("Access-Control-Allow-Origin: $origin");
-        } else if (empty($origin)) {
-            header("Access-Control-Allow-Origin: *");
-        } else {
-            http_response_code(403);
-            die(json_encode(['error' => 'Origin not allowed', 'origin' => $origin]));
-        }
+        // Block unauthorized origins
+        http_response_code(403);
+        die(json_encode(['error' => 'Origin not allowed', 'origin' => $origin]));
     }
     
-    header("Vary: Origin");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
     header("Access-Control-Allow-Credentials: true");
-    header("Access-Control-Max-Age: 86400");
+    header("Access-Control-Max-Age: 86400"); // Cache preflight for 24 hours
     header("Content-Type: application/json; charset=utf-8");
     
     // Security headers
@@ -108,7 +80,7 @@ function setCORSHeaders() {
     
     // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(204);
+        http_response_code(204); // No Content
         exit();
     }
 }
@@ -131,7 +103,7 @@ function getJsonInput() {
 }
 
 /**
- * Generate UUID v4
+ * Generate UUID
  */
 function generateUUID() {
     return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
@@ -141,37 +113,5 @@ function generateUUID() {
         mt_rand(0, 0x3fff) | 0x8000,
         mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
     );
-}
-
-/**
- * Get Site Setting
- */
-function getSiteSetting($key, $default = null) {
-    try {
-        $pdo = getDB();
-        $stmt = $pdo->prepare("SELECT setting_value FROM site_settings WHERE setting_key = ?");
-        $stmt->execute([$key]);
-        $result = $stmt->fetch();
-        return $result ? $result['setting_value'] : $default;
-    } catch (Exception $e) {
-        return $default;
-    }
-}
-
-/**
- * Update Site Setting
- */
-function updateSiteSetting($key, $value) {
-    try {
-        $pdo = getDB();
-        $stmt = $pdo->prepare("
-            INSERT INTO site_settings (setting_key, setting_value) 
-            VALUES (?, ?)
-            ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
-        ");
-        return $stmt->execute([$key, $value]);
-    } catch (Exception $e) {
-        return false;
-    }
 }
 ?>
