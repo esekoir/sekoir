@@ -27,12 +27,12 @@ define('JWT_SECRET', 'E-Sekoir-JWT-Secret-Key-2024-Change-This-To-Random-String'
 // ║              🌐 إعدادات الموقع                             ║
 // ╚═══════════════════════════════════════════════════════════╝
 
-define('SITE_URL', 'https://caba-dz.com');
+define('SITE_URL', 'https://gousra.online');
 
 // النطاقات المسموح بها للـ CORS
 define('ALLOWED_ORIGINS', [
-    'https://caba-dz.com',
-    'https://www.caba-dz.com',
+    'https://gousra.online',
+    'https://www.gousra.online',
     'http://localhost:5173',
     'http://localhost:3000'
 ]);

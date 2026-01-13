@@ -1,5 +1,5 @@
 // API Configuration - Change this to your hosting URL
-const API_BASE_URL = 'https://caba-dz.com/api';
+const API_BASE_URL = 'https://gousra.online/api';
 
 // Token management
 const getToken = () => localStorage.getItem('auth_token');
