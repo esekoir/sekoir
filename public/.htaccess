@@ -22,8 +22,8 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     
-    # Rewrite everything else to index.html for SPA
-    RewriteRule ^ index.html [L]
+    # Rewrite everything else to index.php for SPA
+    RewriteRule ^ index.php [L]
 </IfModule>
 
 # Compression
