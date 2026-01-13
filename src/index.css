@@ -102,8 +102,17 @@
   /* Card 3D Styles */
   .card-3d-container {
     perspective: 1400px;
-    min-width: 320px;
-    height: 220px;
+    min-width: 280px;
+    width: 100%;
+    max-width: 360px;
+    height: 200px;
+  }
+
+  @media (min-width: 640px) {
+    .card-3d-container {
+      min-width: 320px;
+      height: 220px;
+    }
   }
 
   .card-3d {

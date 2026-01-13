@@ -1252,15 +1252,15 @@ const Index = () => {
     <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-br from-gray-50 via-blue-50 to-emerald-50'}`} dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white shadow-lg sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2">
                 <DollarSign size={28} />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl md:text-2xl font-bold">{t.title}</h1>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold">{t.title}</h1>
                   <div className="flex items-center gap-1">
                     <span className="live-dot" />
                     <span className="text-xs font-semibold text-green-200">LIVE</span>
@@ -1344,8 +1344,9 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-6">
         {/* Bank Cards */}
-        <div className="relative mb-6">
-          <div ref={scrollContainerRef} className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4">
+        <div className="relative mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 sm:hidden text-center">← {language === 'ar' ? 'اسحب لرؤية المزيد' : 'Swipe for more'} →</div>
+          <div ref={scrollContainerRef} className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4 -mx-1 px-1">
             <EnhancedBankCard
               cardId="main"
               title="E-Sekoir"
@@ -1411,7 +1412,7 @@ const Index = () => {
         </div>
 
         {/* Items Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-8">
           {getAllItems().map(item => renderItemCard(item))}
         </div>
 
