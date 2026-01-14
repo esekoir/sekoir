@@ -13,16 +13,30 @@ define('DB_CHARSET', 'utf8mb4');
 // JWT Secret Key - Change this to a random string!
 define('JWT_SECRET', 'your-secret-key-change-this-to-random-string');
 
-// Site URL
-define('SITE_URL', 'https://caba-dz.com');
+// Site URL - Auto-detect or set manually
+// Change this to your domain (e.g., 'https://yourdomain.com')
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+define('SITE_URL', getenv('SITE_URL') ?: "{$protocol}://{$host}");
 
-// CORS Settings
-define('ALLOWED_ORIGINS', [
-    'https://caba-dz.com',
-    'https://www.caba-dz.com',
+// CORS Settings - Automatically includes current host
+// Add your domains here if needed
+$dynamicOrigins = [
+    SITE_URL,
+    str_replace('http://', 'https://', SITE_URL), // HTTPS version
+    str_replace('https://', 'http://', SITE_URL), // HTTP version
     'http://localhost:5173',
-    'http://localhost:3000'
-]);
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'http://127.0.0.1:5173',
+];
+
+// Add www variant
+if (strpos($host, 'www.') !== 0) {
+    $dynamicOrigins[] = "{$protocol}://www.{$host}";
+}
+
+define('ALLOWED_ORIGINS', array_unique($dynamicOrigins));
 
 /**
  * Get PDO Database Connection
