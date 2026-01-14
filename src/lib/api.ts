@@ -1,5 +1,25 @@
-// API Configuration - Change this to your hosting URL
-const API_BASE_URL = 'https://caba-dz.com/api';
+// API Configuration - Auto-detect or manually set your hosting URL
+// For production: Change this to your domain (e.g., 'https://yourdomain.com/api')
+// Leave empty string to auto-detect from current URL
+const getApiBaseUrl = (): string => {
+  // Check if running on localhost (development)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Local development
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost/api';
+    }
+    
+    // Production: use same origin
+    return `${window.location.origin}/api`;
+  }
+  
+  // Fallback for SSR or testing
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Token management
 const getToken = () => localStorage.getItem('auth_token');
