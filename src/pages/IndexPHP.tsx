@@ -2,17 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, TrendingDown, RefreshCw, Download, Search, X, Info, 
   Star, DollarSign, Heart, Calculator, CreditCard, Save, Shield, 
-  Zap, Award, Moon, Sun, Chrome
+  Zap, Award, Moon, Sun, Chrome, Settings, Users, MessageSquare, Coins,
+  ChevronLeft, ChevronRight, Trash2, Edit, Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import html2canvas from 'html2canvas';
 import CommentSectionPHP from '@/components/CommentSectionPHP';
-import { authApi, profilesApi, Profile } from '@/lib/api';
+import { authApi, profilesApi, currenciesApi, commentsApi, Profile, Currency, Comment } from '@/lib/api';
 
 interface User {
   id: string;
   email: string;
+  role?: 'admin' | 'moderator' | 'user';
 }
 
 const IndexPHP = () => {
@@ -46,7 +48,20 @@ const IndexPHP = () => {
     card2: false,
     card3: false,
     card4: false,
-    card5: false
+    card5: false,
+    admin: false
+  });
+  
+  // Admin Panel State
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminTab, setAdminTab] = useState<'currencies' | 'users' | 'comments'>('currencies');
+  const [adminCurrencies, setAdminCurrencies] = useState<Currency[]>([]);
+  const [adminProfiles, setAdminProfiles] = useState<Profile[]>([]);
+  const [adminComments, setAdminComments] = useState<Comment[]>([]);
+  const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
+  const [newCurrency, setNewCurrency] = useState({
+    code: '', name_ar: '', name_en: '', type: 'currency',
+    buy_price: '', sell_price: ''
   });
   const [formData, setFormData] = useState({
     fullname: '',
@@ -184,6 +199,7 @@ const IndexPHP = () => {
         setProfile(null);
         setRegistered(false);
         setCurrentView('register');
+        setIsAdmin(false);
         return;
       }
 
@@ -191,6 +207,11 @@ const IndexPHP = () => {
         const data = await authApi.getMe();
         if (data.user) {
           setAuthUser(data.user);
+          // Check if admin
+          if (data.user.role === 'admin') {
+            setIsAdmin(true);
+            fetchAdminData();
+          }
           if (data.profile) {
             setProfile(data.profile);
             if (!data.profile.wilaya || !data.profile.full_name) {
@@ -217,11 +238,79 @@ const IndexPHP = () => {
         authApi.logout();
         setAuthUser(null);
         setProfile(null);
+        setIsAdmin(false);
       }
     };
 
     checkAuth();
   }, []);
+
+  // Admin data fetching
+  const fetchAdminData = async () => {
+    try {
+      const [currData, profData, commData] = await Promise.all([
+        currenciesApi.getAll(),
+        profilesApi.getAll(),
+        commentsApi.getByCode('all')
+      ]);
+      setAdminCurrencies(currData.currencies || []);
+      setAdminProfiles(profData.profiles || []);
+      setAdminComments(commData.comments || []);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
+  };
+
+  const handleAddCurrency = async () => {
+    try {
+      await currenciesApi.create({
+        code: newCurrency.code.toUpperCase(),
+        name_ar: newCurrency.name_ar,
+        name_en: newCurrency.name_en,
+        type: newCurrency.type,
+        buy_price: newCurrency.buy_price ? parseFloat(newCurrency.buy_price) : undefined,
+        sell_price: newCurrency.sell_price ? parseFloat(newCurrency.sell_price) : undefined,
+      });
+      toast({ title: language === 'ar' ? 'تمت الإضافة' : 'Added successfully' });
+      setNewCurrency({ code: '', name_ar: '', name_en: '', type: 'currency', buy_price: '', sell_price: '' });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteCurrency = async (id: string) => {
+    if (!confirm(language === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?')) return;
+    try {
+      await currenciesApi.delete(id);
+      toast({ title: language === 'ar' ? 'تم الحذف' : 'Deleted' });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteProfile = async (userId: string) => {
+    if (!confirm(language === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?')) return;
+    try {
+      await profilesApi.delete(userId);
+      toast({ title: language === 'ar' ? 'تم الحذف' : 'Deleted' });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    if (!confirm(language === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?')) return;
+    try {
+      await commentsApi.delete(id);
+      toast({ title: language === 'ar' ? 'تم الحذف' : 'Deleted' });
+      fetchAdminData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
 
   // Load dark mode preference
   useEffect(() => {
@@ -305,7 +394,8 @@ const IndexPHP = () => {
       card2: false,
       card3: false,
       card4: false,
-      card5: false
+      card5: false,
+      admin: false
     });
 
     setTimeout(() => {
@@ -434,7 +524,8 @@ const IndexPHP = () => {
     setFormData({ fullname: '', username: '', wilaya: '', email: '', password: '' });
     setLoginData({ loginUser: '', loginPass: '' });
     setCompleteProfileData({ fullname: '', username: '', wilaya: '' });
-    setFlippedCards({ main: false, card2: false, card3: false, card4: false, card5: false });
+    setFlippedCards({ main: false, card2: false, card3: false, card4: false, card5: false, admin: false });
+    setIsAdmin(false);
   };
 
   const handleCompleteProfile = async (e: React.FormEvent) => {
@@ -843,6 +934,18 @@ const IndexPHP = () => {
                       <Zap size={16} />
                       {t.charge}
                     </button>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => {
+                          toggleCardFlip('admin');
+                          setTimeout(() => setFlippedCards(prev => ({ ...prev, admin: true })), 50);
+                        }}
+                        className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
+                      >
+                        <Settings size={16} />
+                        {language === 'ar' ? 'لوحة التحكم' : 'Admin Panel'}
+                      </button>
+                    )}
                     <button 
                       onClick={handleLogout}
                       className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-2 rounded-lg font-bold"
@@ -1238,6 +1341,227 @@ const IndexPHP = () => {
               gradient="bg-gradient-to-br from-yellow-400 to-yellow-600" 
               cardNumber="2025 1600 0000 0005" 
             />
+            
+            {/* Admin Panel Card */}
+            {isAdmin && (
+              <div className="card-3d-container" style={{ minWidth: '320px', maxWidth: '400px' }}>
+                <div className={`card-3d ${flippedCards.admin ? 'flipped' : ''}`}>
+                  {/* Admin Card Front */}
+                  <div 
+                    className="card-3d-face card-3d-front bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700"
+                    onClick={() => toggleCardFlip('admin')}
+                  >
+                    <div className="flex items-center gap-2 mb-4">
+                      <Shield size={28} />
+                      <span className="text-2xl font-bold">
+                        {language === 'ar' ? 'لوحة التحكم' : 'Admin Panel'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="bg-white/20 rounded-lg p-2 text-center">
+                        <Coins size={20} className="mx-auto mb-1" />
+                        <div className="text-xs">{adminCurrencies.length}</div>
+                        <div className="text-xs opacity-70">{language === 'ar' ? 'عملة' : 'Currencies'}</div>
+                      </div>
+                      <div className="bg-white/20 rounded-lg p-2 text-center">
+                        <Users size={20} className="mx-auto mb-1" />
+                        <div className="text-xs">{adminProfiles.length}</div>
+                        <div className="text-xs opacity-70">{language === 'ar' ? 'مستخدم' : 'Users'}</div>
+                      </div>
+                      <div className="bg-white/20 rounded-lg p-2 text-center">
+                        <MessageSquare size={20} className="mx-auto mb-1" />
+                        <div className="text-xs">{adminComments.length}</div>
+                        <div className="text-xs opacity-70">{language === 'ar' ? 'تعليق' : 'Comments'}</div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs opacity-80">
+                        {language === 'ar' ? 'اضغط للدخول' : 'Click to enter'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Admin Card Back - Full Dashboard */}
+                  <div 
+                    className="card-3d-face card-3d-back bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ height: 'auto', minHeight: '400px', overflow: 'visible' }}
+                  >
+                    <div className="p-3" onClick={(e) => e.stopPropagation()}>
+                      {/* Tab Navigation */}
+                      <div className="flex gap-1 mb-3">
+                        <button
+                          onClick={() => setAdminTab('currencies')}
+                          className={`flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                            adminTab === 'currencies' 
+                              ? 'bg-white text-purple-600' 
+                              : 'bg-white/20 hover:bg-white/30'
+                          }`}
+                        >
+                          <Coins size={14} />
+                          <span className="hidden sm:inline">{language === 'ar' ? 'العملات' : 'Currencies'}</span>
+                        </button>
+                        <button
+                          onClick={() => setAdminTab('users')}
+                          className={`flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                            adminTab === 'users' 
+                              ? 'bg-white text-purple-600' 
+                              : 'bg-white/20 hover:bg-white/30'
+                          }`}
+                        >
+                          <Users size={14} />
+                          <span className="hidden sm:inline">{language === 'ar' ? 'المستخدمين' : 'Users'}</span>
+                        </button>
+                        <button
+                          onClick={() => setAdminTab('comments')}
+                          className={`flex-1 py-2 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                            adminTab === 'comments' 
+                              ? 'bg-white text-purple-600' 
+                              : 'bg-white/20 hover:bg-white/30'
+                          }`}
+                        >
+                          <MessageSquare size={14} />
+                          <span className="hidden sm:inline">{language === 'ar' ? 'التعليقات' : 'Comments'}</span>
+                        </button>
+                      </div>
+
+                      {/* Currencies Tab */}
+                      {adminTab === 'currencies' && (
+                        <div className="space-y-2">
+                          {/* Add Currency Form */}
+                          <div className="bg-white/10 rounded-lg p-2">
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <input
+                                type="text"
+                                placeholder={language === 'ar' ? 'الرمز' : 'Code'}
+                                value={newCurrency.code}
+                                onChange={(e) => setNewCurrency({...newCurrency, code: e.target.value})}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                              />
+                              <select
+                                value={newCurrency.type}
+                                onChange={(e) => setNewCurrency({...newCurrency, type: e.target.value})}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white"
+                              >
+                                <option value="currency">{language === 'ar' ? 'عملة' : 'Currency'}</option>
+                                <option value="crypto">{language === 'ar' ? 'رقمية' : 'Crypto'}</option>
+                                <option value="gold">{language === 'ar' ? 'ذهب' : 'Gold'}</option>
+                                <option value="transfer">{language === 'ar' ? 'تحويل' : 'Transfer'}</option>
+                              </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <input
+                                type="text"
+                                placeholder={language === 'ar' ? 'الاسم بالعربية' : 'Arabic Name'}
+                                value={newCurrency.name_ar}
+                                onChange={(e) => setNewCurrency({...newCurrency, name_ar: e.target.value})}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                              />
+                              <input
+                                type="text"
+                                placeholder={language === 'ar' ? 'الاسم بالإنجليزية' : 'English Name'}
+                                value={newCurrency.name_en}
+                                onChange={(e) => setNewCurrency({...newCurrency, name_en: e.target.value})}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                              <input
+                                type="number"
+                                placeholder={language === 'ar' ? 'سعر الشراء' : 'Buy Price'}
+                                value={newCurrency.buy_price}
+                                onChange={(e) => setNewCurrency({...newCurrency, buy_price: e.target.value})}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                              />
+                              <input
+                                type="number"
+                                placeholder={language === 'ar' ? 'سعر البيع' : 'Sell Price'}
+                                value={newCurrency.sell_price}
+                                onChange={(e) => setNewCurrency({...newCurrency, sell_price: e.target.value})}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                              />
+                            </div>
+                            <button
+                              onClick={handleAddCurrency}
+                              className="w-full bg-green-500 hover:bg-green-600 text-white py-1.5 rounded text-xs font-bold flex items-center justify-center gap-1"
+                            >
+                              <Plus size={14} />
+                              {language === 'ar' ? 'إضافة عملة' : 'Add Currency'}
+                            </button>
+                          </div>
+
+                          {/* Currency List */}
+                          <div className="max-h-32 overflow-y-auto space-y-1">
+                            {adminCurrencies.map((currency) => (
+                              <div key={currency.id} className="flex items-center justify-between bg-white/10 rounded-lg p-2">
+                                <div>
+                                  <span className="font-bold text-xs">{currency.code}</span>
+                                  <span className="text-xs opacity-70 ml-2">{currency.name_ar}</span>
+                                </div>
+                                <button
+                                  onClick={() => handleDeleteCurrency(currency.id)}
+                                  className="bg-red-500/50 hover:bg-red-500 p-1 rounded"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Users Tab */}
+                      {adminTab === 'users' && (
+                        <div className="max-h-48 overflow-y-auto space-y-1">
+                          {adminProfiles.map((profile) => (
+                            <div key={profile.id} className="flex items-center justify-between bg-white/10 rounded-lg p-2">
+                              <div>
+                                <div className="font-bold text-xs">{profile.full_name || 'No Name'}</div>
+                                <div className="text-xs opacity-70">@{profile.username} • #{profile.member_number}</div>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteProfile(profile.user_id)}
+                                className="bg-red-500/50 hover:bg-red-500 p-1 rounded"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Comments Tab */}
+                      {adminTab === 'comments' && (
+                        <div className="max-h-48 overflow-y-auto space-y-1">
+                          {adminComments.map((comment) => (
+                            <div key={comment.id} className="flex items-center justify-between bg-white/10 rounded-lg p-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs truncate">{comment.content}</div>
+                                <div className="text-xs opacity-70">{comment.currency_code}</div>
+                              </div>
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="bg-red-500/50 hover:bg-red-500 p-1 rounded ml-2"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Back Button */}
+                      <button
+                        onClick={() => setFlippedCards(prev => ({ ...prev, admin: false }))}
+                        className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white py-2 rounded-lg text-xs font-bold"
+                      >
+                        {language === 'ar' ? 'رجوع' : 'Back'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1283,10 +1607,110 @@ const IndexPHP = () => {
         </div>
       </main>
 
+      {/* How We Calculate Section */}
+      <section className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-900/30 dark:to-emerald-900/30 py-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="container mx-auto px-4">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">
+            <Info size={24} className="text-blue-600" />
+            {language === 'ar' ? 'كيف نحسب الأسعار؟' : 'How We Calculate?'}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                  <DollarSign className="text-blue-600" size={20} />
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200">
+                  {language === 'ar' ? 'السعر الرسمي' : 'Official Rate'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {language === 'ar' ? 'من API موثوق' : 'From API'}
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center">
+                  <Calculator className="text-emerald-600" size={20} />
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200">
+                  {language === 'ar' ? 'سعر السكوار' : 'Square Rate'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {language === 'ar' ? 'الرسمي × 1.85' : 'Official × 1.85'}
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                  <TrendingDown className="text-green-600" size={20} />
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200">
+                  {language === 'ar' ? 'سعر الشراء' : 'Buy Rate'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">-2.7%</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
+                  <TrendingUp className="text-red-600" size={20} />
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200">
+                  {language === 'ar' ? 'سعر البيع' : 'Sell Rate'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">+2.7%</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center">
+                  <Coins className="text-purple-600" size={20} />
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200">
+                  {language === 'ar' ? 'فرق العمولة' : 'Commission Diff'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">5.4%</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                  <Zap className="text-orange-600" size={20} />
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200">
+                  {language === 'ar' ? 'المصدر' : 'Source'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">ExchangeRate-API</p>
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl border border-yellow-200 dark:border-yellow-700">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
+              <Info size={16} />
+              <strong>{language === 'ar' ? 'ملاحظة:' : 'Note:'}</strong>
+              {language === 'ar' ? ' الأسعار قد تختلف حسب المنطقة.' : ' Prices may vary by location.'}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8 mt-12">
+      <footer className="bg-gray-800 text-white py-8">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-gray-400">© 2025 E-Sekoir - {t.subtitle}</p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <DollarSign size={24} />
+            <span className="text-xl font-bold">E-Sekoir</span>
+          </div>
+          <p className="text-gray-400 text-sm mb-4">{t.subtitle}</p>
+          <p className="text-gray-500 text-xs">© 2025 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
         </div>
       </footer>
     </div>

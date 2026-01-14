@@ -159,6 +159,19 @@
     transform: rotateY(180deg);
     padding: 15px;
     color: white;
+    overflow: visible;
+  }
+
+  /* Admin card special sizing */
+  .card-3d-container.admin-card {
+    height: auto;
+    min-height: 220px;
+  }
+
+  .card-3d-back.admin-panel {
+    height: auto;
+    min-height: 400px;
+    position: relative;
   }
 
   .card-chip {
