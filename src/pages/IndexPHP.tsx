@@ -760,13 +760,17 @@ const IndexPHP = () => {
             {isMain ? (
               <div className="card-scroll" onClick={(e) => e.stopPropagation()}>
                 {currentView === 'register' && (
-                  <form onSubmit={handleRegister} className="space-y-2">
+                  <form onSubmit={handleRegister} className="space-y-2" onClick={(e) => e.stopPropagation()}>
                     <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
                     <input
                       type="text"
                       value={formData.fullname}
                       onChange={(e) => handleFormChange('fullname', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={1}
                       required
                     />
 
@@ -775,7 +779,11 @@ const IndexPHP = () => {
                       type="text"
                       value={formData.username}
                       onChange={(e) => handleFormChange('username', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={2}
                       required
                       placeholder="user123"
                     />
@@ -785,10 +793,19 @@ const IndexPHP = () => {
                       type="text"
                       maxLength={2}
                       value={formData.wilaya}
-                      onChange={(e) => handleFormChange('wilaya', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        handleFormChange('wilaya', val);
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={3}
                       required
                       placeholder="16"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                     />
 
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
@@ -796,7 +813,11 @@ const IndexPHP = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleFormChange('email', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={4}
                       required
                     />
 
@@ -805,7 +826,11 @@ const IndexPHP = () => {
                       type="password"
                       value={formData.password}
                       onChange={(e) => handleFormChange('password', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="new-password"
+                      tabIndex={5}
                       required
                     />
 
@@ -830,13 +855,17 @@ const IndexPHP = () => {
                 )}
 
                 {currentView === 'login' && (
-                  <form onSubmit={handleLogin} className="space-y-2">
+                  <form onSubmit={handleLogin} className="space-y-2" onClick={(e) => e.stopPropagation()}>
                     <label className="block text-xs font-medium opacity-90">{t.email}</label>
                     <input
                       type="email"
                       value={loginData.loginUser}
                       onChange={(e) => handleLoginChange('loginUser', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={1}
                       required
                     />
 
@@ -845,7 +874,11 @@ const IndexPHP = () => {
                       type="password"
                       value={loginData.loginPass}
                       onChange={(e) => handleLoginChange('loginPass', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="current-password"
+                      tabIndex={2}
                       required
                     />
 
@@ -870,7 +903,7 @@ const IndexPHP = () => {
                 )}
 
                 {currentView === 'completeProfile' && (
-                  <form onSubmit={handleCompleteProfile} className="space-y-2">
+                  <form onSubmit={handleCompleteProfile} className="space-y-2" onClick={(e) => e.stopPropagation()}>
                     <div className="text-center mb-2">
                       <span className="text-lg font-bold">{t.completeProfile}</span>
                     </div>
@@ -880,7 +913,11 @@ const IndexPHP = () => {
                       type="text"
                       value={completeProfileData.fullname}
                       onChange={(e) => handleCompleteProfileChange('fullname', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={1}
                       required
                     />
 
@@ -889,7 +926,11 @@ const IndexPHP = () => {
                       type="text"
                       value={completeProfileData.username}
                       onChange={(e) => handleCompleteProfileChange('username', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={2}
                       required
                       placeholder="user123"
                     />
@@ -899,10 +940,19 @@ const IndexPHP = () => {
                       type="text"
                       maxLength={2}
                       value={completeProfileData.wilaya}
-                      onChange={(e) => handleCompleteProfileChange('wilaya', e.target.value)}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        handleCompleteProfileChange('wilaya', val);
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
+                      autoComplete="off"
+                      tabIndex={3}
                       required
                       placeholder="16"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                     />
 
                     {completeProfileError && <div className="text-red-300 text-xs">{completeProfileError}</div>}
@@ -1429,19 +1479,24 @@ const IndexPHP = () => {
                       {adminTab === 'currencies' && (
                         <div className="space-y-2">
                           {/* Add Currency Form */}
-                          <div className="bg-white/10 rounded-lg p-2">
+                          <div className="bg-white/10 rounded-lg p-2" onClick={(e) => e.stopPropagation()}>
                             <div className="grid grid-cols-2 gap-2 mb-2">
                               <input
                                 type="text"
                                 placeholder={language === 'ar' ? 'الرمز' : 'Code'}
                                 value={newCurrency.code}
                                 onChange={(e) => setNewCurrency({...newCurrency, code: e.target.value})}
-                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                                autoComplete="off"
                               />
                               <select
                                 value={newCurrency.type}
                                 onChange={(e) => setNewCurrency({...newCurrency, type: e.target.value})}
-                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white focus:outline-none focus:ring-2 focus:ring-white/50"
                               >
                                 <option value="currency">{language === 'ar' ? 'عملة' : 'Currency'}</option>
                                 <option value="crypto">{language === 'ar' ? 'رقمية' : 'Crypto'}</option>
@@ -1455,14 +1510,20 @@ const IndexPHP = () => {
                                 placeholder={language === 'ar' ? 'الاسم بالعربية' : 'Arabic Name'}
                                 value={newCurrency.name_ar}
                                 onChange={(e) => setNewCurrency({...newCurrency, name_ar: e.target.value})}
-                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                                autoComplete="off"
                               />
                               <input
                                 type="text"
                                 placeholder={language === 'ar' ? 'الاسم بالإنجليزية' : 'English Name'}
                                 value={newCurrency.name_en}
                                 onChange={(e) => setNewCurrency({...newCurrency, name_en: e.target.value})}
-                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                                autoComplete="off"
                               />
                             </div>
                             <div className="grid grid-cols-2 gap-2 mb-2">
@@ -1471,14 +1532,20 @@ const IndexPHP = () => {
                                 placeholder={language === 'ar' ? 'سعر الشراء' : 'Buy Price'}
                                 value={newCurrency.buy_price}
                                 onChange={(e) => setNewCurrency({...newCurrency, buy_price: e.target.value})}
-                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                                autoComplete="off"
                               />
                               <input
                                 type="number"
                                 placeholder={language === 'ar' ? 'سعر البيع' : 'Sell Price'}
                                 value={newCurrency.sell_price}
                                 onChange={(e) => setNewCurrency({...newCurrency, sell_price: e.target.value})}
-                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50"
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2 py-1 rounded text-xs bg-white/20 border-none text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
+                                autoComplete="off"
                               />
                             </div>
                             <button
