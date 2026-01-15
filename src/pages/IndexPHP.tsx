@@ -3,8 +3,15 @@ import {
   TrendingUp, TrendingDown, RefreshCw, Download, Search, X, Info, 
   Star, DollarSign, Heart, Calculator, CreditCard, Save, Shield, 
   Zap, Award, Moon, Sun, Chrome, Settings, Users, MessageSquare, Coins,
-  ChevronLeft, ChevronRight, Trash2, Edit, Plus
+  ChevronLeft, ChevronRight, Trash2, Edit, Plus, Home, ShoppingCart, User, Wifi
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import html2canvas from 'html2canvas';
@@ -82,6 +89,8 @@ const IndexPHP = () => {
   const [formError, setFormError] = useState('');
   const [loginError, setLoginError] = useState('');
   const [completeProfileError, setCompleteProfileError] = useState('');
+  const [showChargeDialog, setShowChargeDialog] = useState(false);
+  const [activeNavItem, setActiveNavItem] = useState('home');
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -500,12 +509,24 @@ const IndexPHP = () => {
   };
 
   const handleCharge = () => {
-    const amount = prompt(language === 'ar' ? "أدخل مبلغ الشحن (€):" : "Enter charge amount (€):", "10");
-    if (amount && !isNaN(Number(amount))) {
-      const newBalance = balanceAmount + parseFloat(amount);
-      setBalanceAmount(newBalance);
+    setShowChargeDialog(true);
+  };
+
+  const handleNavClick = (item: string) => {
+    setActiveNavItem(item);
+    if (item === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (item === 'account') {
+      if (registered) {
+        setCurrentView('account');
+        setFlippedCards(prev => ({ ...prev, main: true }));
+      } else {
+        setFlippedCards(prev => ({ ...prev, main: true }));
+      }
+    } else if (item === 'shop') {
+      // Placeholder - will redirect to shop link later
       toast({
-        title: `✅ ${language === 'ar' ? 'تم شحن' : 'Charged'} ${amount} €`,
+        title: language === 'ar' ? 'المتجر قريباً!' : 'Shop coming soon!',
       });
     }
   };
@@ -716,6 +737,8 @@ const IndexPHP = () => {
     const isFlipped = flippedCards[cardId as keyof typeof flippedCards];
     const displayName = registered && globalName ? globalName.toUpperCase() : 'E-SEKOIR USER';
     const displayCardNumber = registered && userWilaya ? getCardNumber(userWilaya, memberNumber) : cardNumber;
+    const expiryYear = new Date().getFullYear() + 5;
+    const expiryMonth = '12';
 
     const handleCardClick = () => {
       if (isMain) {
@@ -732,25 +755,66 @@ const IndexPHP = () => {
     return (
       <div className="card-3d-container" onClick={handleSimpleFlip}>
         <div className={`card-3d ${isFlipped ? 'flipped' : ''}`}>
+          {/* Front of Card - Realistic Bank Card Design */}
           <div
-            className={`card-3d-face card-3d-front ${gradient}`}
+            className={`card-3d-face card-3d-front ${gradient} relative`}
             onClick={isMain ? handleCardClick : undefined}
+            style={{
+              background: `linear-gradient(135deg, ${gradient.includes('emerald') ? '#059669' : gradient.includes('purple') ? '#7c3aed' : gradient.includes('amber') ? '#d97706' : '#1e40af'} 0%, ${gradient.includes('emerald') ? '#064e3b' : gradient.includes('purple') ? '#4c1d95' : gradient.includes('amber') ? '#92400e' : '#1e3a8a'} 100%)`,
+            }}
           >
-            <div className="text-2xl font-bold mb-3">{title}</div>
-            <div className="card-chip"></div>
-            <div className="text-xl tracking-wider font-semibold" style={{ letterSpacing: '0.15em' }} dir="ltr">
+            {/* Card Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white transform translate-x-32 -translate-y-32"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white transform -translate-x-24 translate-y-24"></div>
+            </div>
+
+            {/* Card Title/Bank Name */}
+            <div className="relative flex justify-between items-start mb-1">
+              <div className="text-xl font-bold tracking-wide">{title}</div>
+              {/* Contactless Symbol */}
+              <div className="card-contactless">
+                <span></span>
+              </div>
+            </div>
+
+            {/* Chip */}
+            <div className="card-chip mt-3 mb-4"></div>
+
+            {/* Card Number */}
+            <div 
+              className="text-lg md:text-xl tracking-widest font-mono font-semibold mb-4" 
+              style={{ letterSpacing: '0.2em', textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }} 
+              dir="ltr"
+            >
               {displayCardNumber}
             </div>
-            <div className="flex justify-between items-end mt-4">
+
+            {/* Card Holder and Expiry */}
+            <div className="flex justify-between items-end relative">
               <div>
-                <div className="text-xs opacity-80 uppercase tracking-wide">{t.cardHolder}</div>
-                <div className="text-sm font-semibold uppercase">{displayName}</div>
+                <div className="text-[10px] opacity-70 uppercase tracking-wider mb-0.5">{t.cardHolder}</div>
+                <div className="text-sm font-bold uppercase tracking-wide" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                  {displayName}
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-xs opacity-80 uppercase tracking-wide">{t.validThru}</div>
-                <div className="text-sm font-semibold">12/2028</div>
+                <div className="text-[10px] opacity-70 uppercase tracking-wider mb-0.5">{t.validThru}</div>
+                <div className="text-sm font-bold" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                  {expiryMonth}/{expiryYear.toString().slice(-2)}
+                </div>
+              </div>
+              {/* Card Logo */}
+              <div className="card-logo absolute -bottom-1 right-0">
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-6 rounded-full bg-red-500 opacity-80"></div>
+                  <div className="w-6 h-6 rounded-full bg-yellow-500 opacity-80 -ml-3"></div>
+                </div>
               </div>
             </div>
+
+            {/* Hologram Effect */}
+            <div className="card-hologram"></div>
           </div>
 
           <div
@@ -1770,7 +1834,7 @@ const IndexPHP = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
+      <footer className="bg-gray-800 text-white py-8 pb-24">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <DollarSign size={24} />
@@ -1780,6 +1844,59 @@ const IndexPHP = () => {
           <p className="text-gray-500 text-xs">© 2025 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
         </div>
       </footer>
+
+      {/* Bottom Navigation */}
+      <nav className="bottom-nav">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-around items-center">
+            <button 
+              onClick={() => handleNavClick('home')}
+              className={`bottom-nav-item ${activeNavItem === 'home' ? 'active' : ''}`}
+            >
+              <Home size={22} />
+              <span>{language === 'ar' ? 'الرئيسية' : 'Home'}</span>
+            </button>
+            <button 
+              onClick={() => handleNavClick('shop')}
+              className={`bottom-nav-item ${activeNavItem === 'shop' ? 'active' : ''}`}
+            >
+              <ShoppingCart size={22} />
+              <span>{language === 'ar' ? 'تسوق' : 'Shop'}</span>
+            </button>
+            <button 
+              onClick={() => handleNavClick('account')}
+              className={`bottom-nav-item ${activeNavItem === 'account' ? 'active' : ''}`}
+            >
+              <User size={22} />
+              <span>{language === 'ar' ? 'الحساب' : 'Account'}</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Charge Coming Soon Dialog */}
+      <Dialog open={showChargeDialog} onOpenChange={setShowChargeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl">
+              {language === 'ar' ? '🚀 قريباً!' : '🚀 Coming Soon!'}
+            </DialogTitle>
+            <DialogDescription className="text-center text-lg mt-4">
+              {language === 'ar' 
+                ? 'خدمة شحن الرصيد ستكون متوفرة قريباً. ترقبوا التحديثات!'
+                : 'The balance charging service will be available soon. Stay tuned for updates!'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => setShowChargeDialog(false)}
+              className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+            >
+              {language === 'ar' ? 'حسناً' : 'Got it!'}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
