@@ -197,19 +197,40 @@
     border-radius: 3px;
   }
 
-  /* Input cursor fix */
+  /* Input cursor fix and focus stability */
   input[type="text"],
   input[type="email"],
   input[type="password"],
-  input[type="number"] {
+  input[type="number"],
+  textarea,
+  select {
     caret-color: #000 !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
   }
 
   .dark input[type="text"],
   .dark input[type="email"],
   .dark input[type="password"],
-  .dark input[type="number"] {
+  .dark input[type="number"],
+  .dark textarea,
+  .dark select {
     caret-color: #fff !important;
+  }
+
+  /* Prevent card flip from stealing focus */
+  .card-3d-back input,
+  .card-3d-back select,
+  .card-3d-back textarea {
+    position: relative;
+    z-index: 100;
+  }
+
+  .card-3d-back input:focus,
+  .card-3d-back select:focus,
+  .card-3d-back textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
   }
 
   /* Icon styles */
