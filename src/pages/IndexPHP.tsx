@@ -398,18 +398,8 @@ const IndexPHP = () => {
   };
 
   const toggleCardFlip = (cardId: string) => {
-    setFlippedCards({
-      main: false,
-      card2: false,
-      card3: false,
-      card4: false,
-      card5: false,
-      admin: false
-    });
-
-    setTimeout(() => {
-      setFlippedCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
-    }, 50);
+    // Simply toggle the specific card without resetting others
+    setFlippedCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
   };
 
   const handleFormChange = (field: string, value: string) => {
@@ -748,25 +738,30 @@ const IndexPHP = () => {
     const expiryYear = new Date().getFullYear() + 5;
     const expiryMonth = '12';
 
-    const handleCardClick = () => {
-      if (isMain) {
-        toggleCardFlip(cardId);
-      }
-    };
 
-    const handleSimpleFlip = () => {
+    const handleSimpleFlip = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (!isMain) {
         toggleCardFlip(cardId);
       }
     };
 
+    const handleMainCardClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isMain) {
+        toggleCardFlip(cardId);
+      }
+    };
+
     return (
-      <div className="card-3d-container" onClick={handleSimpleFlip}>
+      <div className="card-3d-container snap-center" onClick={handleSimpleFlip}>
         <div className={`card-3d ${isFlipped ? 'flipped' : ''}`}>
           {/* Front of Card - Realistic Bank Card Design */}
           <div
             className={`card-3d-face card-3d-front ${gradient} relative`}
-            onClick={isMain ? handleCardClick : undefined}
+            onClick={isMain ? handleMainCardClick : undefined}
             style={{
               background: `linear-gradient(135deg, ${gradient.includes('emerald') ? '#059669' : gradient.includes('purple') ? '#7c3aed' : gradient.includes('amber') ? '#d97706' : '#1e40af'} 0%, ${gradient.includes('emerald') ? '#064e3b' : gradient.includes('purple') ? '#4c1d95' : gradient.includes('amber') ? '#92400e' : '#1e3a8a'} 100%)`,
             }}
@@ -803,25 +798,26 @@ const IndexPHP = () => {
             </div>
 
             {/* Card Holder and Expiry */}
-            <div className="flex justify-between items-end relative">
-              <div>
-                <div className="text-[10px] opacity-70 uppercase tracking-wider mb-0.5">{t.cardHolder}</div>
-                <div className="text-sm font-bold uppercase tracking-wide" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+            <div className="flex justify-between items-end relative pr-16">
+              <div className="flex-1 min-w-0">
+                <div className="text-[9px] opacity-70 uppercase tracking-wider mb-0.5">{t.cardHolder}</div>
+                <div className="text-xs sm:text-sm font-bold uppercase tracking-wide truncate" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
                   {displayName}
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-[10px] opacity-70 uppercase tracking-wider mb-0.5">{t.validThru}</div>
-                <div className="text-sm font-bold" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+              <div className="text-right ml-2">
+                <div className="text-[9px] opacity-70 uppercase tracking-wider mb-0.5">{t.validThru}</div>
+                <div className="text-xs sm:text-sm font-bold" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
                   {expiryMonth}/{expiryYear.toString().slice(-2)}
                 </div>
               </div>
-              {/* Card Logo */}
-              <div className="card-logo absolute -bottom-1 right-0">
-                <div className="flex items-center gap-1">
-                  <div className="w-6 h-6 rounded-full bg-red-500 opacity-80"></div>
-                  <div className="w-6 h-6 rounded-full bg-yellow-500 opacity-80 -ml-3"></div>
-                </div>
+            </div>
+            
+            {/* Card Logo - Mastercard style */}
+            <div className="absolute bottom-4 right-4">
+              <div className="flex items-center">
+                <div className="w-7 h-7 rounded-full bg-red-500 opacity-90"></div>
+                <div className="w-7 h-7 rounded-full bg-yellow-400 opacity-90 -ml-3"></div>
               </div>
             </div>
 
