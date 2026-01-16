@@ -515,14 +515,22 @@ const IndexPHP = () => {
   const handleNavClick = (item: string) => {
     setActiveNavItem(item);
     if (item === 'home') {
+      // Reset card flip and scroll to top
+      setFlippedCards(prev => ({ ...prev, main: false }));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item === 'account') {
-      if (registered) {
-        setCurrentView('account');
-        setFlippedCards(prev => ({ ...prev, main: true }));
-      } else {
-        setFlippedCards(prev => ({ ...prev, main: true }));
+      // Scroll to card section and flip card to show back (account view)
+      const cardSection = document.getElementById('bank-cards-section');
+      if (cardSection) {
+        cardSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+      // Flip the main card to show account/login
+      setTimeout(() => {
+        setFlippedCards(prev => ({ ...prev, main: true }));
+        if (registered) {
+          setCurrentView('account');
+        }
+      }, 300);
     } else if (item === 'shop') {
       // Placeholder - will redirect to shop link later
       toast({
@@ -781,10 +789,14 @@ const IndexPHP = () => {
             {/* Chip */}
             <div className="card-chip mt-3 mb-4"></div>
 
-            {/* Card Number */}
+            {/* Card Number - Single Line */}
             <div 
-              className="text-lg md:text-xl tracking-widest font-mono font-semibold mb-4" 
-              style={{ letterSpacing: '0.2em', textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }} 
+              className="font-mono font-semibold mb-3 whitespace-nowrap" 
+              style={{ 
+                fontSize: 'clamp(14px, 4vw, 20px)',
+                letterSpacing: '0.15em', 
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)' 
+              }} 
               dir="ltr"
             >
               {displayCardNumber}
@@ -1123,7 +1135,7 @@ const IndexPHP = () => {
     if (item.category === 'currency') {
       return (
         <div key={item.id} id={`card-${item.id}`} className="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-gray-100 dark:border-gray-700 relative group glow-card">
-          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
             <button onClick={() => toggleFavorite(item.id)}>
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
@@ -1173,7 +1185,7 @@ const IndexPHP = () => {
     } else if (item.category === 'crypto') {
       return (
         <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-purple-100 dark:border-purple-800 relative group glow-card">
-          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
             <button onClick={() => toggleFavorite(item.id)}>
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
@@ -1217,7 +1229,7 @@ const IndexPHP = () => {
     } else if (item.category === 'gold') {
       return (
         <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-amber-200 dark:border-amber-700 relative group glow-card">
-          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
             <button onClick={() => toggleFavorite(item.id)}>
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
@@ -1256,7 +1268,7 @@ const IndexPHP = () => {
     } else if (item.category === 'transfer') {
       return (
         <div key={item.id} id={`card-${item.id}`} className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-xl shadow-md hover:shadow-xl transition-all p-5 border border-indigo-200 dark:border-indigo-700 relative group glow-card">
-          <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
             <button onClick={() => toggleFavorite(item.id)}>
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
@@ -1418,7 +1430,7 @@ const IndexPHP = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         {/* Bank Cards Section */}
-        <div className="mb-8">
+        <div id="bank-cards-section" className="mb-8 scroll-mt-20">
           <div 
             ref={scrollContainerRef}
             className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth hide-scrollbar"

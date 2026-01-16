@@ -99,21 +99,25 @@
     scrollbar-width: none;
   }
 
-  /* Card 3D Styles */
+  /* Card 3D Styles - Standard credit card ratio 85.6mm × 53.98mm */
   .card-3d-container {
     perspective: 1400px;
-    min-width: 300px;
     width: 100%;
-    max-width: 400px;
-    height: 230px;
-    aspect-ratio: 1.586 / 1; /* Standard credit card ratio */
+    max-width: 340px;
+    height: 214px; /* 340 / 1.586 */
   }
 
   @media (min-width: 640px) {
     .card-3d-container {
-      min-width: 340px;
-      max-width: 420px;
-      height: 260px;
+      max-width: 400px;
+      height: 252px; /* 400 / 1.586 */
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .card-3d-container {
+      max-width: 430px;
+      height: 271px; /* 430 / 1.586 */
     }
   }
 
