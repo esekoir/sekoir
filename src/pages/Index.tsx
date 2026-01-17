@@ -1459,7 +1459,7 @@ const Index = () => {
               <span className="text-xl font-bold">E-Sekoir</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">{t.subtitle}</p>
-            <p className="text-gray-500 text-xs">© 2024 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
+            <p className="text-gray-500 text-xs">© 2026 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
           </div>
         </div>
       </footer>
