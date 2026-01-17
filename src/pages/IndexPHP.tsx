@@ -398,8 +398,16 @@ const IndexPHP = () => {
   };
 
   const toggleCardFlip = (cardId: string) => {
-    // Simply toggle the specific card without resetting others
-    setFlippedCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
+    // When flipping a card, reset all other cards to front face first
+    setFlippedCards(prev => {
+      const newState = { main: false, card2: false, card3: false, card4: false, card5: false, admin: false };
+      // If the clicked card was already flipped, keep it unflipped (all false)
+      // If it wasn't flipped, flip only this one
+      if (!prev[cardId as keyof typeof prev]) {
+        newState[cardId as keyof typeof newState] = true;
+      }
+      return newState;
+    });
   };
 
   const handleFormChange = (field: string, value: string) => {
