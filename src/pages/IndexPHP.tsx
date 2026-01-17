@@ -1444,32 +1444,32 @@ const IndexPHP = () => {
               cardId="main" 
               title="E-Sekoir" 
               gradient="bg-gradient-to-br from-emerald-500 to-blue-600" 
-              cardNumber="2025 1600 0000 0001" 
+              cardNumber="2026 1600 0000 0001" 
               isMain={true}
             />
             <EnhancedBankCard 
               cardId="card2" 
               title="Premium" 
               gradient="bg-gradient-to-br from-amber-500 to-orange-600" 
-              cardNumber="2025 1600 0000 0002" 
+              cardNumber="2026 1600 0000 0002" 
             />
             <EnhancedBankCard 
               cardId="card3" 
               title="Business" 
               gradient="bg-gradient-to-br from-purple-500 to-pink-600" 
-              cardNumber="2025 1600 0000 0003" 
+              cardNumber="2026 1600 0000 0003" 
             />
             <EnhancedBankCard 
               cardId="card4" 
               title="Platinum" 
               gradient="bg-gradient-to-br from-gray-700 to-gray-900" 
-              cardNumber="2025 1600 0000 0004" 
+              cardNumber="2026 1600 0000 0004" 
             />
             <EnhancedBankCard 
               cardId="card5" 
               title="VIP" 
               gradient="bg-gradient-to-br from-yellow-400 to-yellow-600" 
-              cardNumber="2025 1600 0000 0005" 
+              cardNumber="2026 1600 0000 0005"
             />
             
             {/* Admin Panel Card */}
@@ -1857,7 +1857,7 @@ const IndexPHP = () => {
             <span className="text-xl font-bold">E-Sekoir</span>
           </div>
           <p className="text-gray-400 text-sm mb-4">{t.subtitle}</p>
-          <p className="text-gray-500 text-xs">© 2025 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
+          <p className="text-gray-500 text-xs">© 2026 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
         </div>
       </footer>
 
