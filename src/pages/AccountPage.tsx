@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import BottomNavigation from '@/components/BottomNavigation';
 import {
   User, Settings, CreditCard, Wallet, History, LogOut,
   Camera, Edit, Save, X, DollarSign, Moon, Sun, Globe,
@@ -536,6 +537,9 @@ const AccountPage = () => {
           </button>
         </DialogContent>
       </Dialog>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation language={language} />
     </div>
   );
 };
