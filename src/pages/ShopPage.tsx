@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import BottomNavigation from '@/components/BottomNavigation';
 import {
   ShoppingCart, Plus, ArrowLeft, Moon, Sun, Globe, TrendingUp, TrendingDown,
   MessageSquare, Heart, Send, User, MapPin, DollarSign, Filter, X
@@ -763,6 +764,9 @@ const ShopPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation language={language} />
     </div>
   );
 };
