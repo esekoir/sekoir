@@ -517,23 +517,11 @@ const IndexPHP = () => {
       setFlippedCards(prev => ({ ...prev, main: false }));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (item === 'account') {
-      // Scroll to card section and flip card to show back (account view)
-      const cardSection = document.getElementById('bank-cards-section');
-      if (cardSection) {
-        cardSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      // Flip the main card to show account/login
-      setTimeout(() => {
-        setFlippedCards(prev => ({ ...prev, main: true }));
-        if (registered) {
-          setCurrentView('account');
-        }
-      }, 300);
+      // Navigate to account/auth page
+      window.location.href = registered ? '/account' : '/auth';
     } else if (item === 'shop') {
-      // Placeholder - will redirect to shop link later
-      toast({
-        title: language === 'ar' ? 'المتجر قريباً!' : 'Shop coming soon!',
-      });
+      // Navigate to shop page
+      window.location.href = '/shop';
     }
   };
 
@@ -839,251 +827,58 @@ const IndexPHP = () => {
           >
             {isMain ? (
               <div className="card-scroll" onClick={(e) => e.stopPropagation()}>
-                {currentView === 'register' && (
-                  <form onSubmit={handleRegister} className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                    <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
-                    <input
-                      type="text"
-                      value={formData.fullname}
-                      onChange={(e) => handleFormChange('fullname', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={1}
-                      required
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
-                    <input
-                      type="text"
-                      value={formData.username}
-                      onChange={(e) => handleFormChange('username', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={2}
-                      required
-                      placeholder="user123"
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={formData.wilaya}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '');
-                        handleFormChange('wilaya', val);
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={3}
-                      required
-                      placeholder="16"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.email}</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleFormChange('email', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={4}
-                      required
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.password}</label>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => handleFormChange('password', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="new-password"
-                      tabIndex={5}
-                      required
-                    />
-
-                    {formError && <div className="text-red-300 text-xs">{formError}</div>}
-
-                    <button 
-                      type="submit" 
-                      disabled={authLoading}
-                      className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
-                    >
-                      {authLoading ? '...' : (language === 'ar' ? 'إنشاء حساب' : 'Create Account')}
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('login')}
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-400 text-white py-2 rounded-lg font-bold"
-                    >
-                      {t.showLogin}
-                    </button>
-                  </form>
-                )}
-
-                {currentView === 'login' && (
-                  <form onSubmit={handleLogin} className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                    <label className="block text-xs font-medium opacity-90">{t.email}</label>
-                    <input
-                      type="email"
-                      value={loginData.loginUser}
-                      onChange={(e) => handleLoginChange('loginUser', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={1}
-                      required
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.password}</label>
-                    <input
-                      type="password"
-                      value={loginData.loginPass}
-                      onChange={(e) => handleLoginChange('loginPass', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="current-password"
-                      tabIndex={2}
-                      required
-                    />
-
-                    {loginError && <div className="text-red-300 text-xs">{loginError}</div>}
-
-                    <button 
-                      type="submit" 
-                      disabled={authLoading}
-                      className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
-                    >
-                      {authLoading ? '...' : t.login}
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => setCurrentView('register')}
-                      className="w-full bg-gradient-to-r from-gray-500 to-gray-400 text-white py-2 rounded-lg font-bold"
-                    >
-                      {t.backToRegister}
-                    </button>
-                  </form>
-                )}
-
-                {currentView === 'completeProfile' && (
-                  <form onSubmit={handleCompleteProfile} className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                    <div className="text-center mb-2">
-                      <span className="text-lg font-bold">{t.completeProfile}</span>
-                    </div>
-                    
-                    <label className="block text-xs font-medium opacity-90">{t.fullname}</label>
-                    <input
-                      type="text"
-                      value={completeProfileData.fullname}
-                      onChange={(e) => handleCompleteProfileChange('fullname', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={1}
-                      required
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.username}</label>
-                    <input
-                      type="text"
-                      value={completeProfileData.username}
-                      onChange={(e) => handleCompleteProfileChange('username', e.target.value)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={2}
-                      required
-                      placeholder="user123"
-                    />
-
-                    <label className="block text-xs font-medium opacity-90">{t.wilaya}</label>
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={completeProfileData.wilaya}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '');
-                        handleCompleteProfileChange('wilaya', val);
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className={`w-full px-3 py-2 rounded-lg border-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`}
-                      autoComplete="off"
-                      tabIndex={3}
-                      required
-                      placeholder="16"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
-
-                    {completeProfileError && <div className="text-red-300 text-xs">{completeProfileError}</div>}
-
-                    <button 
-                      type="submit" 
-                      disabled={authLoading}
-                      className="w-full bg-gradient-to-r from-green-500 to-green-400 text-white py-2 rounded-lg font-bold disabled:opacity-50"
-                    >
-                      {authLoading ? '...' : t.save}
-                    </button>
-                  </form>
-                )}
-
-                {currentView === 'account' && (
-                  <div className="space-y-3">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{globalName.toUpperCase()}</div>
-                      <div className="text-sm opacity-80">{t.memberNumber}: {memberNumber || '---'}</div>
-                    </div>
-                    <div className="bg-white/20 rounded-lg p-3">
-                      <div className="text-xs opacity-80">{t.balance}</div>
-                      <div className="text-2xl font-bold">{balanceAmount.toFixed(2)} €</div>
-                    </div>
-                    <button 
-                      onClick={handleCharge}
-                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
-                    >
-                      <Zap size={16} />
-                      {t.charge}
-                    </button>
-                    {isAdmin && (
-                      <button 
-                        onClick={() => {
-                          toggleCardFlip('admin');
-                          setTimeout(() => setFlippedCards(prev => ({ ...prev, admin: true })), 50);
-                        }}
-                        className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
-                      >
-                        <Settings size={16} />
-                        {language === 'ar' ? 'لوحة التحكم' : 'Admin Panel'}
-                      </button>
-                    )}
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-2 rounded-lg font-bold"
-                    >
-                      {t.logout}
-                    </button>
+                {/* Always show balance view */}
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">{registered ? globalName.toUpperCase() : 'E-SEKOIR USER'}</div>
+                    <div className="text-sm opacity-80">{t.memberNumber}: {memberNumber || '---'}</div>
                   </div>
-                )}
+                  <div className="bg-white/20 rounded-lg p-3">
+                    <div className="text-xs opacity-80">{t.balance}</div>
+                    <div className="text-2xl font-bold">{balanceAmount.toFixed(2)} DZD</div>
+                  </div>
+                  <button 
+                    onClick={handleCharge}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
+                  >
+                    <Zap size={16} />
+                    {t.charge}
+                  </button>
+                  {registered ? (
+                    <>
+                      {isAdmin && (
+                        <button 
+                          onClick={() => window.location.href = '/admin'}
+                          className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
+                        >
+                          <Settings size={16} />
+                          {language === 'ar' ? 'لوحة التحكم' : 'Admin Panel'}
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => window.location.href = '/account'}
+                        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
+                      >
+                        <User size={16} />
+                        {language === 'ar' ? 'إعدادات الحساب' : 'Account Settings'}
+                      </button>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-2 rounded-lg font-bold"
+                      >
+                        {t.logout}
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={() => window.location.href = '/auth'}
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
+                    >
+                      <User size={16} />
+                      {t.login} / {t.register}
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full">

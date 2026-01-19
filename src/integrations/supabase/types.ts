@@ -173,6 +173,95 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_comments: {
+        Row: {
+          content: string
+          created_at: string
+          guest_name: string | null
+          id: string
+          is_guest: boolean | null
+          likes_count: number | null
+          listing_id: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          guest_name?: string | null
+          id?: string
+          is_guest?: boolean | null
+          likes_count?: number | null
+          listing_id: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          guest_name?: string | null
+          id?: string
+          is_guest?: boolean | null
+          likes_count?: number | null
+          listing_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_comments_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_listings: {
+        Row: {
+          amount: number
+          contact_info: string | null
+          created_at: string
+          currency_code: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          price_per_unit: number
+          total_price: number | null
+          type: string
+          updated_at: string
+          user_id: string | null
+          wilaya: string | null
+        }
+        Insert: {
+          amount: number
+          contact_info?: string | null
+          created_at?: string
+          currency_code: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_per_unit: number
+          total_price?: number | null
+          type: string
+          updated_at?: string
+          user_id?: string | null
+          wilaya?: string | null
+        }
+        Update: {
+          amount?: number
+          contact_info?: string | null
+          created_at?: string
+          currency_code?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_per_unit?: number
+          total_price?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+          wilaya?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
