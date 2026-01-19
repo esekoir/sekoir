@@ -9,13 +9,11 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   android: {
-    // Keep status bar visible - no fullscreen
     backgroundColor: '#0a0f1c',
     allowMixedContent: true
   },
   plugins: {
     StatusBar: {
-      // Keep status bar visible with dark background
       style: 'DARK',
       backgroundColor: '#0a0f1c',
       overlaysWebView: false
@@ -23,7 +21,12 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: '#0a0f1c',
-      showSpinner: false
+      showSpinner: false,
+      androidScaleType: 'CENTER_CROP'
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true
     }
   }
 };
