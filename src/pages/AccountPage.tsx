@@ -7,7 +7,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import {
   User, Settings, CreditCard, Wallet, History, LogOut,
   Camera, Edit, Save, X, DollarSign, Moon, Sun, Globe,
-  ArrowLeft, Shield, CheckCircle, Zap, ChevronRight
+  Shield, CheckCircle, Zap, ChevronRight
 } from 'lucide-react';
 import {
   Dialog,
@@ -283,14 +283,8 @@ const AccountPage = () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-emerald-50 to-gray-100'}`}>
       {/* Header */}
-      <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center sticky top-0 z-10`}>
-        <button
-          onClick={() => navigate('/')}
-          className={`flex items-center gap-2 ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-        >
-          <ArrowLeft size={20} />
-          <span>{t.backToHome}</span>
-        </button>
+      <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50`}>
+        <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{t.title}</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
@@ -307,7 +301,7 @@ const AccountPage = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="container mx-auto px-4 py-6 max-w-2xl pt-20 pb-24">
         {/* Profile Card */}
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden mb-6`}>
           {/* Bank Card Style Header */}
