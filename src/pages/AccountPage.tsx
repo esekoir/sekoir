@@ -42,6 +42,7 @@ const AccountPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showChargeDialog, setShowChargeDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editData, setEditData] = useState({
     full_name: '',
@@ -78,8 +79,20 @@ const AccountPage = () => {
     if (user) {
       fetchWallet();
       fetchTransactions();
+      checkAdminStatus();
     }
   }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    setIsAdmin(!!data);
+  };
 
   const translations = {
     ar: {
@@ -107,7 +120,8 @@ const AccountPage = () => {
       pending: 'قيد الانتظار',
       completed: 'مكتمل',
       rejected: 'مرفوض',
-      backToHome: 'العودة للرئيسية'
+      backToHome: 'العودة للرئيسية',
+      adminPanel: 'لوحة التحكم'
     },
     en: {
       title: 'My Account',
@@ -134,7 +148,8 @@ const AccountPage = () => {
       pending: 'Pending',
       completed: 'Completed',
       rejected: 'Rejected',
-      backToHome: 'Back to Home'
+      backToHome: 'Back to Home',
+      adminPanel: 'Admin Panel'
     }
   };
 
@@ -497,6 +512,17 @@ const AccountPage = () => {
             )}
           </div>
         </div>
+
+        {/* Admin Panel Button */}
+        {isAdmin && (
+          <button
+            onClick={() => navigate('/admin')}
+            className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-lg mb-4"
+          >
+            <Shield size={20} />
+            {t.adminPanel}
+          </button>
+        )}
 
         {/* Logout Button */}
         <button
