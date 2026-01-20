@@ -51,6 +51,10 @@ const AuthPage = () => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
   const translations = {
     ar: {
       title: 'E-Sekoir',
@@ -68,7 +72,12 @@ const AuthPage = () => {
       googleLogin: 'تسجيل بـ Google',
       noAccount: 'ليس لديك حساب؟',
       hasAccount: 'لديك حساب بالفعل؟',
-      backToHome: '← العودة للصفحة الرئيسية',
+      forgotPassword: 'نسيت كلمة المرور؟',
+      resetPassword: 'استعادة كلمة المرور',
+      resetDescription: 'أدخل بريدك الإلكتروني وسنرسل لك رابط لاستعادة كلمة المرور',
+      sendResetLink: 'إرسال رابط الاستعادة',
+      backToLogin: 'العودة لتسجيل الدخول',
+      resetSent: 'تم إرسال رابط الاستعادة! تحقق من بريدك الإلكتروني',
       loading: 'جاري التحميل...'
     },
     en: {
@@ -87,7 +96,12 @@ const AuthPage = () => {
       googleLogin: 'Sign in with Google',
       noAccount: "Don't have an account?",
       hasAccount: 'Already have an account?',
-      backToHome: '← Back to Home',
+      forgotPassword: 'Forgot password?',
+      resetPassword: 'Reset Password',
+      resetDescription: 'Enter your email and we will send you a reset link',
+      sendResetLink: 'Send Reset Link',
+      backToLogin: 'Back to Login',
+      resetSent: 'Reset link sent! Check your email',
       loading: 'Loading...'
     }
   };
@@ -200,6 +214,29 @@ const AuthPage = () => {
       if (error) throw error;
     } catch (error: any) {
       toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast({ title: language === 'ar' ? 'أدخل البريد الإلكتروني' : 'Enter your email', variant: 'destructive' });
+      return;
+    }
+    
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth`
+      });
+      if (error) throw error;
+      toast({ title: t.resetSent });
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -394,6 +431,17 @@ const AuthPage = () => {
                   </button>
                 </div>
                 {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                
+                {/* Forgot Password Link */}
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-emerald-500 text-sm hover:underline"
+                  >
+                    {t.forgotPassword}
+                  </button>
+                )}
               </div>
 
               <button
@@ -426,17 +474,58 @@ const AuthPage = () => {
             </div>
           </div>
 
-          {/* Back to Home */}
-          <div className="text-center mt-6">
-            <button
-              onClick={() => navigate('/')}
-              className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} transition-colors`}
-            >
-              {t.backToHome}
-            </button>
-          </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 w-full max-w-md`}>
+            <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              {t.resetPassword}
+            </h3>
+            <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {t.resetDescription}
+            </p>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="relative">
+                <Mail className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className={`w-full pr-10 pl-4 py-3 rounded-xl border focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all ${
+                    darkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-500'
+                  }`}
+                  placeholder="example@email.com"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={resetLoading}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              >
+                {resetLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  t.sendResetLink
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(false)}
+                className={`w-full py-3 rounded-xl font-semibold ${
+                  darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {t.backToLogin}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <BottomNavigation language={language} />
