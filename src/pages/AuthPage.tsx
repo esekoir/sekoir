@@ -47,7 +47,7 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      navigate('/');
+      navigate('/account');
     }
   }, [isAuthenticated, authLoading, navigate]);
 
