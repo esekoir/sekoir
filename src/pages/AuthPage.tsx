@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import BottomNavigation from '@/components/BottomNavigation';
 import { 
   Mail, Lock, User, Eye, EyeOff, ArrowRight, MapPin, 
   DollarSign, Moon, Sun, Globe 
@@ -211,9 +212,9 @@ const AuthPage = () => {
   }
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-emerald-50 to-gray-100'} flex flex-col`}>
-      {/* Header */}
-      <header className="p-4 flex justify-between items-center">
+    <div className={`min-h-screen pb-20 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-emerald-50 to-gray-100'} flex flex-col`}>
+      {/* Header - Fixed */}
+      <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center sticky top-0 z-10`}>
         <div className="flex items-center gap-2">
           <DollarSign className="text-emerald-500" size={28} />
           <span className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{t.title}</span>
@@ -221,13 +222,13 @@ const AuthPage = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
             <Globe size={20} />
           </button>
           <button
             onClick={toggleDarkMode}
-            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
@@ -436,6 +437,9 @@ const AuthPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation language={language} />
     </div>
   );
 };
