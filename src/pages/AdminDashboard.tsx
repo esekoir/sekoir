@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import BottomNavigation from '@/components/BottomNavigation';
 import {
   Users, MessageSquare, Coins, Settings, Shield, Home,
   Trash2, Edit, Plus, CheckCircle, XCircle, Search,
-  Moon, Sun, Globe, ArrowLeft, Save, X, Wallet, RefreshCw
+  Moon, Sun, Globe, Save, Wallet, RefreshCw
 } from 'lucide-react';
 import {
   Dialog,
@@ -82,7 +83,7 @@ const AdminDashboard = () => {
   const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
   const [editingCurrency, setEditingCurrency] = useState<Currency | null>(null);
   const [currencyForm, setCurrencyForm] = useState({
-    code: '', name_ar: '', name_en: '', type: 'currency', buy_price: '', sell_price: ''
+    code: '', name_ar: '', name_en: '', type: 'currency', buy_price: '', sell_price: '', icon_url: '', display_order: '0'
   });
 
   const translations = {
@@ -105,8 +106,8 @@ const AdminDashboard = () => {
       save: 'حفظ',
       cancel: 'إلغاء',
       delete: 'حذف',
-      verify: 'توثيق',
-      unverify: 'إلغاء التوثيق',
+      verify: 'موثق',
+      unverify: 'غير موثق',
       balance: 'الرصيد',
       memberNumber: 'رقم العضوية',
       noData: 'لا توجد بيانات',
@@ -120,7 +121,17 @@ const AdminDashboard = () => {
       emailNotifications: 'إشعارات البريد',
       pushNotifications: 'إشعارات Push',
       saveSettings: 'حفظ الإعدادات',
-      unauthorized: 'غير مصرح لك بالوصول'
+      unauthorized: 'غير مصرح لك بالوصول',
+      shopEnabled: 'تفعيل السوق',
+      shopDisabledNote: 'ملاحظة عند تعطيل السوق',
+      siteNotice: 'ملاحظة الموقع',
+      siteNoticeEnabled: 'إظهار الملاحظة',
+      displayOrder: 'ترتيب العرض',
+      iconUrl: 'رابط الأيقونة',
+      active: 'نشط',
+      inactive: 'معطل',
+      toggleActive: 'تفعيل/تعطيل',
+      editUser: 'تعديل المستخدم'
     },
     en: {
       title: 'Admin Dashboard',
@@ -141,8 +152,8 @@ const AdminDashboard = () => {
       save: 'Save',
       cancel: 'Cancel',
       delete: 'Delete',
-      verify: 'Verify',
-      unverify: 'Unverify',
+      verify: 'Verified',
+      unverify: 'Unverified',
       balance: 'Balance',
       memberNumber: 'Member #',
       noData: 'No data',
@@ -156,7 +167,17 @@ const AdminDashboard = () => {
       emailNotifications: 'Email Notifications',
       pushNotifications: 'Push Notifications',
       saveSettings: 'Save Settings',
-      unauthorized: 'Unauthorized access'
+      unauthorized: 'Unauthorized access',
+      shopEnabled: 'Enable Shop',
+      shopDisabledNote: 'Shop Disabled Notice',
+      siteNotice: 'Site Notice',
+      siteNoticeEnabled: 'Show Notice',
+      displayOrder: 'Display Order',
+      iconUrl: 'Icon URL',
+      active: 'Active',
+      inactive: 'Inactive',
+      toggleActive: 'Toggle Active',
+      editUser: 'Edit User'
     }
   };
 
@@ -241,7 +262,9 @@ const AdminDashboard = () => {
         name_en: currencyForm.name_en,
         type: currencyForm.type,
         buy_price: currencyForm.buy_price ? parseFloat(currencyForm.buy_price) : null,
-        sell_price: currencyForm.sell_price ? parseFloat(currencyForm.sell_price) : null
+        sell_price: currencyForm.sell_price ? parseFloat(currencyForm.sell_price) : null,
+        icon_url: currencyForm.icon_url || null,
+        display_order: currencyForm.display_order ? parseInt(currencyForm.display_order) : 0
       };
 
       if (editingCurrency) {
@@ -260,7 +283,7 @@ const AdminDashboard = () => {
       toast({ title: language === 'ar' ? 'تم الحفظ' : 'Saved' });
       setShowCurrencyDialog(false);
       setEditingCurrency(null);
-      setCurrencyForm({ code: '', name_ar: '', name_en: '', type: 'currency', buy_price: '', sell_price: '' });
+      setCurrencyForm({ code: '', name_ar: '', name_en: '', type: 'currency', buy_price: '', sell_price: '', icon_url: '', display_order: '0' });
       fetchAllData();
     } catch (error: any) {
       toast({ title: error.message, variant: 'destructive' });
@@ -339,9 +362,24 @@ const AdminDashboard = () => {
       name_en: currency.name_en,
       type: currency.type,
       buy_price: currency.buy_price?.toString() || '',
-      sell_price: currency.sell_price?.toString() || ''
+      sell_price: currency.sell_price?.toString() || '',
+      icon_url: (currency as any).icon_url || '',
+      display_order: (currency as any).display_order?.toString() || '0'
     });
     setShowCurrencyDialog(true);
+  };
+
+  const handleToggleCurrencyActive = async (currency: Currency) => {
+    const { error } = await supabase
+      .from('currencies')
+      .update({ is_active: !currency.is_active })
+      .eq('id', currency.id);
+    
+    if (error) {
+      toast({ title: error.message, variant: 'destructive' });
+    } else {
+      fetchAllData();
+    }
   };
 
   if (authLoading || checkingAdmin) {
@@ -373,21 +411,13 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-purple-50 to-gray-100'}`}>
+    <div className={`min-h-screen pb-20 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-purple-50 to-gray-100'}`}>
       {/* Header */}
-      <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center sticky top-0 z-10`}>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/')}
-            className={`flex items-center gap-2 ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className={`text-xl font-bold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-            <Shield className="text-purple-500" size={24} />
-            {t.title}
-          </h1>
-        </div>
+      <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50`}>
+        <h1 className={`text-xl font-bold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+          <Shield className="text-purple-500" size={24} />
+          {t.title}
+        </h1>
         <div className="flex items-center gap-2">
           <button
             onClick={fetchAllData}
@@ -410,7 +440,7 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 pt-20">
         {/* Tabs */}
         <div className={`flex gap-2 mb-6 overflow-x-auto pb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
           {(['currencies', 'users', 'comments', 'wallets', 'settings'] as const).map((tab) => (
@@ -457,7 +487,7 @@ const AdminDashboard = () => {
             <button
               onClick={() => {
                 setEditingCurrency(null);
-                setCurrencyForm({ code: '', name_ar: '', name_en: '', type: 'currency', buy_price: '', sell_price: '' });
+                setCurrencyForm({ code: '', name_ar: '', name_en: '', type: 'currency', buy_price: '', sell_price: '', icon_url: '', display_order: '0' });
                 setShowCurrencyDialog(true);
               }}
               className="mb-4 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-semibold"
@@ -476,19 +506,40 @@ const AdminDashboard = () => {
                       <th className="px-4 py-3 text-right">{t.type}</th>
                       <th className="px-4 py-3 text-right">{t.buyPrice}</th>
                       <th className="px-4 py-3 text-right">{t.sellPrice}</th>
+                      <th className="px-4 py-3 text-right">{language === 'ar' ? 'الحالة' : 'Status'}</th>
                       <th className="px-4 py-3 text-right"></th>
                     </tr>
                   </thead>
                   <tbody className={darkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}>
                     {filteredCurrencies.map((currency) => (
-                      <tr key={currency.id} className={darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
+                      <tr key={currency.id} className={`${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} ${!currency.is_active ? 'opacity-50' : ''}`}>
                         <td className={`px-4 py-3 font-mono font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{currency.code}</td>
                         <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{currency.name_ar}</td>
                         <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{currency.type}</td>
                         <td className={`px-4 py-3 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{currency.buy_price || '-'}</td>
                         <td className={`px-4 py-3 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>{currency.sell_price || '-'}</td>
                         <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                            currency.is_active 
+                              ? 'bg-green-500/20 text-green-500' 
+                              : 'bg-red-500/20 text-red-500'
+                          }`}>
+                            {currency.is_active ? t.active : t.inactive}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
                           <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => handleToggleCurrencyActive(currency)}
+                              className={`p-2 rounded-lg ${
+                                currency.is_active 
+                                  ? 'bg-orange-500/20 text-orange-500 hover:bg-orange-500/30' 
+                                  : 'bg-green-500/20 text-green-500 hover:bg-green-500/30'
+                              }`}
+                              title={t.toggleActive}
+                            >
+                              {currency.is_active ? <XCircle size={16} /> : <CheckCircle size={16} />}
+                            </button>
                             <button
                               onClick={() => openEditCurrency(currency)}
                               className="p-2 bg-blue-500/20 text-blue-500 rounded-lg hover:bg-blue-500/30"
@@ -667,6 +718,66 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* Shop Settings */}
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                {language === 'ar' ? 'إعدادات السوق' : 'Shop Settings'}
+              </h3>
+              <div className="space-y-4">
+                <label className={`flex items-center gap-3 cursor-pointer ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  <input
+                    type="checkbox"
+                    checked={getSetting('shop').enabled !== false}
+                    onChange={(e) => updateSettingValue('shop', 'enabled', e.target.checked)}
+                    className="w-5 h-5 rounded accent-purple-600"
+                  />
+                  {t.shopEnabled}
+                </label>
+                <div>
+                  <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.shopDisabledNote}</label>
+                  <textarea
+                    value={getSetting('shop').disabled_message || ''}
+                    onChange={(e) => updateSettingValue('shop', 'disabled_message', e.target.value)}
+                    placeholder={language === 'ar' ? 'هذه الرسالة ستظهر عند تعطيل السوق...' : 'This message will appear when shop is disabled...'}
+                    className={`w-full px-4 py-3 rounded-xl border resize-none ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400'
+                    }`}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Site Notice */}
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                {language === 'ar' ? 'ملاحظة الموقع' : 'Site Notice'}
+              </h3>
+              <div className="space-y-4">
+                <label className={`flex items-center gap-3 cursor-pointer ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  <input
+                    type="checkbox"
+                    checked={getSetting('notice').enabled || false}
+                    onChange={(e) => updateSettingValue('notice', 'enabled', e.target.checked)}
+                    className="w-5 h-5 rounded accent-purple-600"
+                  />
+                  {t.siteNoticeEnabled}
+                </label>
+                <div>
+                  <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.siteNotice}</label>
+                  <textarea
+                    value={getSetting('notice').message || ''}
+                    onChange={(e) => updateSettingValue('notice', 'message', e.target.value)}
+                    placeholder={language === 'ar' ? 'اكتب ملاحظة تظهر للزوار...' : 'Write a notice to display to visitors...'}
+                    className={`w-full px-4 py-3 rounded-xl border resize-none ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400'
+                    }`}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Google OAuth Settings */}
             <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6`}>
               <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -678,7 +789,7 @@ const AdminDashboard = () => {
                     type="checkbox"
                     checked={getSetting('google_oauth').enabled || false}
                     onChange={(e) => updateSettingValue('google_oauth', 'enabled', e.target.checked)}
-                    className="w-5 h-5 rounded"
+                    className="w-5 h-5 rounded accent-purple-600"
                   />
                   {t.googleEnabled}
                 </label>
@@ -708,7 +819,7 @@ const AdminDashboard = () => {
                     type="checkbox"
                     checked={getSetting('notifications').email_enabled || false}
                     onChange={(e) => updateSettingValue('notifications', 'email_enabled', e.target.checked)}
-                    className="w-5 h-5 rounded"
+                    className="w-5 h-5 rounded accent-purple-600"
                   />
                   {t.emailNotifications}
                 </label>
@@ -717,7 +828,7 @@ const AdminDashboard = () => {
                     type="checkbox"
                     checked={getSetting('notifications').push_enabled || false}
                     onChange={(e) => updateSettingValue('notifications', 'push_enabled', e.target.checked)}
-                    className="w-5 h-5 rounded"
+                    className="w-5 h-5 rounded accent-purple-600"
                   />
                   {t.pushNotifications}
                 </label>
@@ -737,9 +848,9 @@ const AdminDashboard = () => {
 
       {/* Currency Dialog */}
       <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
-        <DialogContent className={`sm:max-w-md ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+        <DialogContent className={`sm:max-w-lg max-h-[90vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white'}`}>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className={darkMode ? 'text-white' : 'text-gray-800'}>
               {editingCurrency ? t.editCurrency : t.addCurrency}
             </DialogTitle>
           </DialogHeader>
@@ -765,10 +876,10 @@ const AdminDashboard = () => {
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'
                   }`}
                 >
-                  <option value="currency">Currency</option>
-                  <option value="crypto">Crypto</option>
-                  <option value="gold">Gold</option>
-                  <option value="transfer">Transfer</option>
+                  <option value="currency">{language === 'ar' ? 'عملة' : 'Currency'}</option>
+                  <option value="crypto">{language === 'ar' ? 'عملة رقمية' : 'Crypto'}</option>
+                  <option value="gold">{language === 'ar' ? 'ذهب' : 'Gold'}</option>
+                  <option value="transfer">{language === 'ar' ? 'تحويل' : 'Transfer'}</option>
                 </select>
               </div>
             </div>
@@ -818,18 +929,43 @@ const AdminDashboard = () => {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.iconUrl}</label>
+                <input
+                  type="text"
+                  value={currencyForm.icon_url}
+                  onChange={(e) => setCurrencyForm({ ...currencyForm, icon_url: e.target.value })}
+                  placeholder="/icons/xxx.png"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 placeholder-gray-400'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.displayOrder}</label>
+                <input
+                  type="number"
+                  value={currencyForm.display_order}
+                  onChange={(e) => setCurrencyForm({ ...currencyForm, display_order: e.target.value })}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300'
+                  }`}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
               <button
                 onClick={() => setShowCurrencyDialog(false)}
-                className={`flex-1 py-3 rounded-xl font-semibold ${
-                  darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+                className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                  darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                 }`}
               >
                 {t.cancel}
               </button>
               <button
                 onClick={handleSaveCurrency}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-semibold"
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-semibold transition-all"
               >
                 {t.save}
               </button>
@@ -837,6 +973,9 @@ const AdminDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation language={language} />
     </div>
   );
 };

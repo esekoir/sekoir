@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import BottomNavigation from '@/components/BottomNavigation';
 import {
-  ShoppingCart, Plus, ArrowLeft, Moon, Sun, Globe, TrendingUp, TrendingDown,
+  ShoppingCart, Plus, Moon, Sun, Globe, TrendingUp, TrendingDown,
   MessageSquare, Heart, Send, User, MapPin, DollarSign, Filter, X
 } from 'lucide-react';
 import {
@@ -380,22 +380,14 @@ const ShopPage = () => {
   }
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100'}`}>
+    <div className={`min-h-screen pb-20 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100'}`}>
       {/* Header */}
-      <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center sticky top-0 z-10`}>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/')}
-            className={`flex items-center gap-2 ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="text-blue-500" size={24} />
-            <div>
-              <h1 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{t.title}</h1>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.subtitle}</p>
-            </div>
+      <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50`}>
+        <div className="flex items-center gap-2">
+          <ShoppingCart className="text-blue-500" size={24} />
+          <div>
+            <h1 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{t.title}</h1>
+            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.subtitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -414,7 +406,7 @@ const ShopPage = () => {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="container mx-auto px-4 py-6 max-w-2xl pt-20">
         {/* Filters */}
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 mb-6 shadow-lg`}>
           <div className="flex flex-wrap gap-2 items-center">
