@@ -601,7 +601,7 @@ const IndexPHP = () => {
   };
 
   const getCardNumber = (wilaya: string = '16', memNum: number | null = null) => {
-    const year = new Date().getFullYear();
+    const year = 2026; // Fixed branding year
     const wilayaFormatted = wilaya.padStart(2, '0');
     const memberFormatted = memNum ? memNum.toString().padStart(4, '0') : '0001';
     return `${year} ${wilayaFormatted}00 0000 ${memberFormatted}`;

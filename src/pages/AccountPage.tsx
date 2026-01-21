@@ -271,7 +271,7 @@ const AccountPage = () => {
   };
 
   const getCardNumber = () => {
-    const year = new Date().getFullYear();
+    const year = 2026; // Fixed branding year
     const p = profile as any;
     const wilaya = (p?.wilaya || '16').padStart(2, '0');
     const memberNum = (p?.member_number || 1).toString().padStart(4, '0');
