@@ -56,10 +56,14 @@ const ShopPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, loading: authLoading } = useAuth();
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved !== null ? saved === 'true' : true;
+  });
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
   const [filterCurrency, setFilterCurrency] = useState('all');
@@ -142,12 +146,16 @@ const ShopPage = () => {
   const currencies = ['EUR', 'USD', 'GBP', 'CAD', 'TRY', 'AED', 'BTC', 'USDT', 'ETH'];
 
   useEffect(() => {
+    // Apply dark mode immediately from localStorage
     const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(savedDarkMode);
     if (savedDarkMode) {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-    fetchListings();
+    
+    // Fetch listings without blocking UI
+    fetchListings().finally(() => setInitialLoading(false));
   }, []);
 
   const toggleDarkMode = () => {
@@ -371,16 +379,11 @@ const ShopPage = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100'}`}>
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
+  // Always show main content with BottomNavigation - no early returns that hide navigation
   return (
     <div className={`min-h-screen pb-20 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100'}`}>
+      {/* Bottom Navigation - Always visible */}
+      <BottomNavigation language={language} />
       {/* Header */}
       <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50`}>
         <div className="flex items-center gap-2">
@@ -456,7 +459,11 @@ const ShopPage = () => {
 
         {/* Listings */}
         <div className="space-y-4">
-          {filteredListings.length === 0 ? (
+          {initialLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : filteredListings.length === 0 ? (
             <div className={`text-center py-12 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
               {t.noListings}
             </div>
@@ -757,8 +764,7 @@ const ShopPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation language={language} />
+      {/* Bottom Navigation already rendered at top of component */}
     </div>
   );
 };
