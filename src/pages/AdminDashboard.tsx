@@ -1438,7 +1438,7 @@ const AdminDashboard = () => {
       </Dialog>
 
       {/* Bottom Navigation */}
-      <BottomNavigation language={language} />
+      <BottomNavigation />
     </div>
   );
 };
