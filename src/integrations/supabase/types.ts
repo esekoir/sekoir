@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      charge_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          payment_method: string
+          payment_proof: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_message: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          payment_method?: string
+          payment_proof?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_message?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_method?: string
+          payment_proof?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_message?: string | null
+        }
+        Relationships: []
+      }
       comment_dislikes: {
         Row: {
           comment_id: string
@@ -345,6 +384,89 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      verification_plans: {
+        Row: {
+          created_at: string
+          display_order: number
+          duration_months: number
+          features: Json | null
+          id: string
+          is_active: boolean
+          name_ar: string
+          name_en: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          duration_months?: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          name_ar: string
+          name_en: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          duration_months?: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          name_ar?: string
+          name_en?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      verification_requests: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          payment_proof: string | null
+          plan_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          payment_proof?: string | null
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          payment_proof?: string | null
+          plan_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_requests_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "verification_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wallet_transactions: {
         Row: {

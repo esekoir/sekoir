@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import { 
   Mail, Lock, User, Eye, EyeOff, ArrowRight, MapPin, 
@@ -17,11 +18,10 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { darkMode, toggleDarkMode, language, toggleLanguage } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -36,14 +36,6 @@ const AuthPage = () => {
     username: '',
     wilaya: ''
   });
-
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(savedDarkMode);
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
@@ -108,16 +100,6 @@ const AuthPage = () => {
 
   const t = translations[language];
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
   const validateForm = () => {
     const newErrors = { email: '', password: '', fullName: '', username: '', wilaya: '' };
@@ -258,7 +240,7 @@ const AuthPage = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+            onClick={toggleLanguage}
             className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
             <Globe size={20} />
@@ -528,7 +510,7 @@ const AuthPage = () => {
       )}
 
       {/* Bottom Navigation */}
-      <BottomNavigation language={language} />
+      <BottomNavigation />
     </div>
   );
 };

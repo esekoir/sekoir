@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import html2canvas from 'html2canvas';
 import CommentSectionPHP from '@/components/CommentSectionPHP';
@@ -26,8 +27,7 @@ interface User {
 
 const IndexPHP = () => {
   const { toast } = useToast();
-  const [language, setLanguage] = useState<'ar' | 'en'>('en');
-  const [darkMode, setDarkMode] = useState(true);
+  const { language, toggleLanguage, darkMode, toggleDarkMode } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [lastUpdate, setLastUpdate] = useState(new Date());
@@ -321,15 +321,6 @@ const IndexPHP = () => {
     }
   };
 
-  // Load dark mode preference
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(savedDarkMode);
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
-
   // Fetch rates
   useEffect(() => {
     fetchAllData();
@@ -346,17 +337,6 @@ const IndexPHP = () => {
       setRates({ currencies: { EUR: 0.00665, USD: 0.00729, GBP: 0.00577, CAD: 0.01023, TRY: 0.21, AED: 0.0268 } });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
     }
   };
 
@@ -1159,7 +1139,7 @@ const IndexPHP = () => {
               <button onClick={toggleDarkMode} className="bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-all">
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              <button onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')} className="bg-white/20 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-white/30 transition-all">
+              <button onClick={toggleLanguage} className="bg-white/20 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-white/30 transition-all">
                 {language === 'ar' ? 'EN' : 'عربي'}
               </button>
               <button onClick={() => setShowCalculator(!showCalculator)} className="bg-white/20 px-3 py-1.5 rounded-lg hover:bg-white/30 transition-all">

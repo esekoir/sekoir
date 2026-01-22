@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import {
   ShoppingCart, Plus, Moon, Sun, Globe, TrendingUp, TrendingDown,
@@ -56,11 +57,7 @@ const ShopPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, loading: authLoading } = useAuth();
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved !== null ? saved === 'true' : true;
-  });
-  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
+  const { darkMode, toggleDarkMode, language, toggleLanguage } = useLanguage();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -146,28 +143,9 @@ const ShopPage = () => {
   const currencies = ['EUR', 'USD', 'GBP', 'CAD', 'TRY', 'AED', 'BTC', 'USDT', 'ETH'];
 
   useEffect(() => {
-    // Apply dark mode immediately from localStorage
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
     // Fetch listings without blocking UI
     fetchListings().finally(() => setInitialLoading(false));
   }, []);
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
   const fetchListings = async () => {
     setLoading(true);
@@ -383,7 +361,7 @@ const ShopPage = () => {
   return (
     <div className={`min-h-screen pb-20 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100'}`}>
       {/* Bottom Navigation - Always visible */}
-      <BottomNavigation language={language} />
+      <BottomNavigation />
       {/* Header */}
       <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50`}>
         <div className="flex items-center gap-2">
@@ -395,7 +373,7 @@ const ShopPage = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+            onClick={toggleLanguage}
             className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
             <Globe size={20} />

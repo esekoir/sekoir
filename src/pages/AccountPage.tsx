@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import {
   User, Settings, CreditCard, Wallet, History, LogOut,
@@ -31,32 +32,40 @@ interface Transaction {
   created_at: string;
 }
 
+interface VerificationPlan {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  duration_months: number;
+  price: number;
+  features: string[];
+}
+
 const AccountPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, signOut, loading: authLoading } = useAuth();
-  const [darkMode, setDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
+  const { darkMode, toggleDarkMode, language, toggleLanguage } = useLanguage();
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showChargeDialog, setShowChargeDialog] = useState(false);
+  const [showVerifyDialog, setShowVerifyDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [verificationPlans, setVerificationPlans] = useState<VerificationPlan[]>([]);
+  const [chargeAmount, setChargeAmount] = useState('');
+  const [chargeMethod, setChargeMethod] = useState('ccp');
+  const [chargeMessage, setChargeMessage] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [submittingCharge, setSubmittingCharge] = useState(false);
+  const [submittingVerify, setSubmittingVerify] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editData, setEditData] = useState({
     full_name: '',
     username: '',
     wilaya: ''
   });
-
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(savedDarkMode);
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -80,6 +89,7 @@ const AccountPage = () => {
       fetchWallet();
       fetchTransactions();
       checkAdminStatus();
+      fetchVerificationPlans();
     }
   }, [user]);
 
@@ -92,6 +102,81 @@ const AccountPage = () => {
       .eq('role', 'admin')
       .maybeSingle();
     setIsAdmin(!!data);
+  };
+
+  const fetchVerificationPlans = async () => {
+    const { data } = await supabase
+      .from('verification_plans')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order');
+    if (data) {
+      setVerificationPlans(data.map(p => ({
+        ...p,
+        features: typeof p.features === 'string' ? JSON.parse(p.features) : (p.features || [])
+      })));
+    }
+  };
+
+  const handleSubmitChargeRequest = async () => {
+    if (!user || !wallet || !chargeAmount) return;
+    setSubmittingCharge(true);
+    try {
+      const amount = parseFloat(chargeAmount);
+      if (isNaN(amount) || amount <= 0) {
+        toast({ title: language === 'ar' ? 'أدخل مبلغ صحيح' : 'Enter valid amount', variant: 'destructive' });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('charge_requests')
+        .insert({
+          user_id: user.id,
+          amount: amount,
+          payment_method: chargeMethod,
+          user_message: chargeMessage || null
+        });
+
+      if (error) throw error;
+
+      toast({ 
+        title: language === 'ar' ? 'تم إرسال طلب الشحن بنجاح!' : 'Charge request submitted!',
+        description: language === 'ar' ? 'سيتم مراجعة طلبك قريباً' : 'Your request will be reviewed soon'
+      });
+      setShowChargeDialog(false);
+      setChargeAmount('');
+      setChargeMessage('');
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    } finally {
+      setSubmittingCharge(false);
+    }
+  };
+
+  const handleSubmitVerifyRequest = async () => {
+    if (!user || !selectedPlan) return;
+    setSubmittingVerify(true);
+    try {
+      const { error } = await supabase
+        .from('verification_requests')
+        .insert({
+          user_id: user.id,
+          plan_id: selectedPlan
+        });
+
+      if (error) throw error;
+
+      toast({ 
+        title: language === 'ar' ? 'تم إرسال طلب التوثيق!' : 'Verification request submitted!',
+        description: language === 'ar' ? 'سيتم مراجعة طلبك قريباً' : 'Your request will be reviewed soon'
+      });
+      setShowVerifyDialog(false);
+      setSelectedPlan(null);
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    } finally {
+      setSubmittingVerify(false);
+    }
   };
 
   const translations = {
@@ -113,15 +198,28 @@ const AccountPage = () => {
       notVerified: 'غير موثق',
       changePhoto: 'تغيير الصورة',
       noTransactions: 'لا توجد معاملات',
-      chargeTitle: 'شحن الرصيد',
-      chargeDescription: 'خدمة شحن الرصيد ستكون متوفرة قريباً',
+      chargeTitle: 'طلب شحن الرصيد',
+      chargeDescription: 'أدخل المبلغ واختر طريقة الدفع',
       deposit: 'إيداع',
       withdrawal: 'سحب',
       pending: 'قيد الانتظار',
       completed: 'مكتمل',
       rejected: 'مرفوض',
       backToHome: 'العودة للرئيسية',
-      adminPanel: 'لوحة التحكم'
+      adminPanel: 'لوحة التحكم',
+      amount: 'المبلغ',
+      paymentMethod: 'طريقة الدفع',
+      ccp: 'CCP',
+      baridimob: 'BaridiMob',
+      bank: 'تحويل بنكي',
+      message: 'رسالة للإدارة (اختياري)',
+      submitRequest: 'إرسال الطلب',
+      verifyAccount: 'توثيق الحساب',
+      choosePlan: 'اختر الباقة',
+      dzd: 'دج',
+      months: 'أشهر',
+      year: 'سنة',
+      requestVerify: 'طلب التوثيق'
     },
     en: {
       title: 'My Account',
@@ -141,15 +239,28 @@ const AccountPage = () => {
       notVerified: 'Not Verified',
       changePhoto: 'Change Photo',
       noTransactions: 'No transactions',
-      chargeTitle: 'Charge Balance',
-      chargeDescription: 'Balance charging service will be available soon',
+      chargeTitle: 'Request Balance Charge',
+      chargeDescription: 'Enter amount and choose payment method',
       deposit: 'Deposit',
       withdrawal: 'Withdrawal',
       pending: 'Pending',
       completed: 'Completed',
       rejected: 'Rejected',
       backToHome: 'Back to Home',
-      adminPanel: 'Admin Panel'
+      adminPanel: 'Admin Panel',
+      amount: 'Amount',
+      paymentMethod: 'Payment Method',
+      ccp: 'CCP',
+      baridimob: 'BaridiMob',
+      bank: 'Bank Transfer',
+      message: 'Message to Admin (optional)',
+      submitRequest: 'Submit Request',
+      verifyAccount: 'Verify Account',
+      choosePlan: 'Choose Plan',
+      dzd: 'DZD',
+      months: 'months',
+      year: 'year',
+      requestVerify: 'Request Verification'
     }
   };
 
@@ -192,16 +303,6 @@ const AccountPage = () => {
     }
   };
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -302,7 +403,7 @@ const AccountPage = () => {
         <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{t.title}</h1>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+            onClick={toggleLanguage}
             className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
             <Globe size={20} />
@@ -374,7 +475,7 @@ const AccountPage = () => {
 
           {/* Balance Section */}
           <div className={`p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.balance}</p>
                 <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -389,6 +490,16 @@ const AccountPage = () => {
                 {t.charge}
               </button>
             </div>
+            {/* Verify Account Button */}
+            {!(profile as any)?.is_verified && (
+              <button
+                onClick={() => setShowVerifyDialog(true)}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold hover:shadow-lg transition-all"
+              >
+                <CheckCircle size={20} />
+                {t.verifyAccount}
+              </button>
+            )}
           </div>
 
           {/* Edit Profile Section */}
@@ -540,26 +651,136 @@ const AccountPage = () => {
 
       {/* Charge Dialog */}
       <Dialog open={showChargeDialog} onOpenChange={setShowChargeDialog}>
-        <DialogContent className={`sm:max-w-md ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
           <DialogHeader>
-            <DialogTitle className="text-center text-2xl">
-              🚀 {language === 'ar' ? 'قريباً!' : 'Coming Soon!'}
+            <DialogTitle className="text-center text-xl flex items-center justify-center gap-2">
+              <Zap className="text-yellow-500" size={24} />
+              {t.chargeTitle}
             </DialogTitle>
           </DialogHeader>
-          <p className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            {t.chargeDescription}
-          </p>
-          <button
-            onClick={() => setShowChargeDialog(false)}
-            className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-bold"
-          >
-            {language === 'ar' ? 'حسناً' : 'Got it!'}
-          </button>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t.amount} ({t.dzd})
+              </label>
+              <input
+                type="number"
+                value={chargeAmount}
+                onChange={(e) => setChargeAmount(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl border ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                }`}
+                placeholder="1000"
+              />
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t.paymentMethod}
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {['ccp', 'baridimob', 'bank'].map((method) => (
+                  <button
+                    key={method}
+                    onClick={() => setChargeMethod(method)}
+                    className={`py-3 rounded-xl font-medium transition-all ${
+                      chargeMethod === method
+                        ? 'bg-emerald-500 text-white'
+                        : darkMode
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {t[method as keyof typeof t]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t.message}
+              </label>
+              <textarea
+                value={chargeMessage}
+                onChange={(e) => setChargeMessage(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl border resize-none ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-800'
+                }`}
+                rows={3}
+                placeholder={language === 'ar' ? 'أي ملاحظات للإدارة...' : 'Any notes for admin...'}
+              />
+            </div>
+            <button
+              onClick={handleSubmitChargeRequest}
+              disabled={submittingCharge || !chargeAmount}
+              className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-white disabled:opacity-50"
+            >
+              {submittingCharge ? '...' : t.submitRequest}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Verification Dialog */}
+      <Dialog open={showVerifyDialog} onOpenChange={setShowVerifyDialog}>
+        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl flex items-center justify-center gap-2">
+              <CheckCircle className="text-blue-500" size={24} />
+              {t.verifyAccount}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <p className={`text-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {t.choosePlan}
+            </p>
+            <div className="space-y-3">
+              {verificationPlans.map((plan) => (
+                <button
+                  key={plan.id}
+                  onClick={() => setSelectedPlan(plan.id)}
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                    selectedPlan === plan.id
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : darkMode
+                        ? 'border-gray-600 hover:border-gray-500'
+                        : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-bold">{language === 'ar' ? plan.name_ar : plan.name_en}</span>
+                    <span className="font-bold text-emerald-500">{plan.price} {t.dzd}</span>
+                  </div>
+                  <div className="text-sm opacity-70">
+                    {plan.duration_months} {plan.duration_months >= 12 ? t.year : t.months}
+                  </div>
+                  <ul className="mt-2 text-xs space-y-1">
+                    {(plan.features || []).map((feature: string, i: number) => (
+                      <li key={i} className="flex items-center gap-1">
+                        <CheckCircle size={12} className="text-emerald-500" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={handleSubmitVerifyRequest}
+              disabled={submittingVerify || !selectedPlan}
+              className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white disabled:opacity-50"
+            >
+              {submittingVerify ? '...' : t.requestVerify}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Bottom Navigation */}
-      <BottomNavigation language={language} />
+      <BottomNavigation />
     </div>
   );
 };
