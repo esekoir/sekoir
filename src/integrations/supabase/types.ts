@@ -262,6 +262,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean | null
+          payment_methods: string[] | null
           price_per_unit: number
           total_price: number | null
           type: string
@@ -277,6 +278,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          payment_methods?: string[] | null
           price_per_unit: number
           total_price?: number | null
           type: string
@@ -292,12 +294,85 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          payment_methods?: string[] | null
           price_per_unit?: number
           total_price?: number | null
           type?: string
           updated_at?: string
           user_id?: string | null
           wilaya?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          listing_id: string | null
+          receiver_id: string
+          sender_id: string | null
+          sender_name: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          listing_id?: string | null
+          receiver_id: string
+          sender_id?: string | null
+          sender_name?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          listing_id?: string | null
+          receiver_id?: string
+          sender_id?: string | null
+          sender_name?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean
+          message_ar: string | null
+          message_en: string | null
+          title_ar: string
+          title_en: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          message_ar?: string | null
+          message_en?: string | null
+          title_ar: string
+          title_en: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          message_ar?: string | null
+          message_en?: string | null
+          title_ar?: string
+          title_en?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
