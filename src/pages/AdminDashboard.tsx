@@ -7,7 +7,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import {
   Users, MessageSquare, Coins, Settings, Shield, Trash2, Edit, Plus, 
   CheckCircle, XCircle, Search, Moon, Sun, Globe, Save, Wallet, RefreshCw,
-  ShoppingCart, CreditCard, Image, FileText, Store
+  ShoppingCart, CreditCard, Image, FileText, Store, Bell, Zap
 } from 'lucide-react';
 import {
   Dialog,
@@ -78,6 +78,41 @@ interface SiteSetting {
   value: any;
 }
 
+interface ChargeRequest {
+  id: string;
+  user_id: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+  user_message: string | null;
+  admin_note: string | null;
+  created_at: string;
+  profiles?: Profile;
+}
+
+interface VerificationRequest {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: string;
+  admin_note: string | null;
+  created_at: string;
+  profiles?: Profile;
+  verification_plans?: { name_ar: string; name_en: string; price: number; duration_months: number };
+}
+
+interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  title_ar: string;
+  title_en: string;
+  message_ar: string | null;
+  message_en: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -86,7 +121,7 @@ const AdminDashboard = () => {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
   const [language, setLanguage] = useState<'ar' | 'en'>('ar');
-  const [activeTab, setActiveTab] = useState<'currencies' | 'users' | 'comments' | 'wallets' | 'listings' | 'settings'>('currencies');
+  const [activeTab, setActiveTab] = useState<'currencies' | 'users' | 'comments' | 'wallets' | 'listings' | 'chargeRequests' | 'verifyRequests' | 'notifications' | 'settings'>('currencies');
   
   // Data states
   const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -95,6 +130,9 @@ const AdminDashboard = () => {
   const [wallets, setWallets] = useState<WalletWithProfile[]>([]);
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
   const [settings, setSettings] = useState<SiteSetting[]>([]);
+  const [chargeRequests, setChargeRequests] = useState<ChargeRequest[]>([]);
+  const [verifyRequests, setVerifyRequests] = useState<VerificationRequest[]>([]);
+  const [adminNotifications, setAdminNotifications] = useState<Notification[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Dialog states
@@ -118,6 +156,9 @@ const AdminDashboard = () => {
       wallets: 'المحافظ',
       listings: 'المبيعات',
       settings: 'الإعدادات',
+      chargeRequests: 'طلبات الشحن',
+      verifyRequests: 'طلبات التوثيق',
+      notifications: 'الإشعارات',
       search: 'بحث...',
       addCurrency: 'إضافة عملة',
       editCurrency: 'تعديل عملة',

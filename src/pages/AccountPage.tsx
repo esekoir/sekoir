@@ -5,10 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import NotificationsPopover from '@/components/NotificationsPopover';
+import MessagesPopover from '@/components/MessagesPopover';
 import {
-  User, Settings, CreditCard, Wallet, History, LogOut,
-  Camera, Edit, Save, X, DollarSign, Moon, Sun, Globe,
-  Shield, CheckCircle, Zap, ChevronRight
+  User, CreditCard, Wallet, History, LogOut,
+  Camera, Edit, Save,
+  Shield, CheckCircle, Zap
 } from 'lucide-react';
 import {
   Dialog,
@@ -45,7 +47,7 @@ const AccountPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, signOut, loading: authLoading } = useAuth();
-  const { darkMode, toggleDarkMode, language, toggleLanguage } = useLanguage();
+  const { darkMode, language } = useLanguage();
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -402,18 +404,8 @@ const AccountPage = () => {
       <header className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50`}>
         <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{t.title}</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleLanguage}
-            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            <Globe size={20} />
-          </button>
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          <MessagesPopover darkMode={darkMode} language={language} />
+          <NotificationsPopover darkMode={darkMode} language={language} />
         </div>
       </header>
 
