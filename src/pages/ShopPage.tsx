@@ -5,9 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import NotificationsPopover from '@/components/NotificationsPopover';
+import MessagesPopover from '@/components/MessagesPopover';
 import {
-  ShoppingCart, Plus, Moon, Sun, Globe, TrendingUp, TrendingDown,
-  MessageSquare, Heart, Send, User, MapPin, DollarSign, Filter, X
+  ShoppingCart, Plus, TrendingUp, TrendingDown,
+  MessageSquare, Send, User, MapPin, Filter, Edit, Trash2, Phone
 } from 'lucide-react';
 import {
   Dialog,
@@ -29,6 +31,7 @@ interface Listing {
   wilaya: string | null;
   is_active: boolean;
   created_at: string;
+  payment_methods: string[] | null;
   profiles?: {
     full_name: string | null;
     username: string | null;
@@ -57,11 +60,16 @@ const ShopPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, loading: authLoading } = useAuth();
-  const { darkMode, toggleDarkMode, language, toggleLanguage } = useLanguage();
+  const { darkMode, language } = useLanguage();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showContactDialog, setShowContactDialog] = useState(false);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [contactListing, setContactListing] = useState<Listing | null>(null);
+  const [contactMessage, setContactMessage] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
   const [filterCurrency, setFilterCurrency] = useState('all');
   const [comments, setComments] = useState<{ [key: string]: MarketplaceComment[] }>({});
@@ -76,7 +84,8 @@ const ShopPage = () => {
     price_per_unit: '',
     description: '',
     contact_info: '',
-    wilaya: ''
+    wilaya: '',
+    payment_methods: ['hand'] as string[]
   });
 
   const translations = {
@@ -106,7 +115,19 @@ const ShopPage = () => {
       filter: 'فلترة',
       wantsToBuy: 'يريد شراء',
       wantsToSell: 'يريد بيع',
-      dzd: 'دج'
+      dzd: 'دج',
+      paymentMethod: 'طريقة الدفع',
+      hand: 'يد بيد',
+      ccp: 'CCP',
+      baridimob: 'بريدي موب',
+      mediator: 'عن طريق وسيط',
+      contact: 'تواصل',
+      editListing: 'تعديل الإعلان',
+      deleteListing: 'حذف الإعلان',
+      contactSeller: 'تواصل مع البائع',
+      contactBuyer: 'تواصل مع المشتري',
+      sendMessage: 'إرسال رسالة',
+      messagePlaceholder: 'اكتب رسالتك هنا...'
     },
     en: {
       title: 'Currency Market',
@@ -134,7 +155,19 @@ const ShopPage = () => {
       filter: 'Filter',
       wantsToBuy: 'wants to buy',
       wantsToSell: 'wants to sell',
-      dzd: 'DZD'
+      dzd: 'DZD',
+      paymentMethod: 'Payment Method',
+      hand: 'Hand to hand',
+      ccp: 'CCP',
+      baridimob: 'BaridiMob',
+      mediator: 'Via Mediator',
+      contact: 'Contact',
+      editListing: 'Edit Listing',
+      deleteListing: 'Delete Listing',
+      contactSeller: 'Contact Seller',
+      contactBuyer: 'Contact Buyer',
+      sendMessage: 'Send Message',
+      messagePlaceholder: 'Write your message here...'
     }
   };
 
@@ -251,7 +284,8 @@ const ShopPage = () => {
           price_per_unit: parseFloat(newListing.price_per_unit),
           description: newListing.description || null,
           contact_info: newListing.contact_info || null,
-          wilaya: newListing.wilaya || (profile as any)?.wilaya || null
+          wilaya: newListing.wilaya || (profile as any)?.wilaya || null,
+          payment_methods: newListing.payment_methods
         });
 
       if (error) throw error;
@@ -265,12 +299,104 @@ const ShopPage = () => {
         price_per_unit: '',
         description: '',
         contact_info: '',
-        wilaya: ''
+        wilaya: '',
+        payment_methods: ['hand']
       });
       fetchListings();
     } catch (error: any) {
       toast({ title: error.message, variant: 'destructive' });
     }
+  };
+
+  const handleUpdateListing = async () => {
+    if (!editingListing) return;
+    try {
+      const { error } = await supabase
+        .from('marketplace_listings')
+        .update({
+          type: newListing.type,
+          currency_code: newListing.currency_code,
+          amount: parseFloat(newListing.amount),
+          price_per_unit: parseFloat(newListing.price_per_unit),
+          description: newListing.description || null,
+          contact_info: newListing.contact_info || null,
+          wilaya: newListing.wilaya || null,
+          payment_methods: newListing.payment_methods
+        })
+        .eq('id', editingListing.id);
+
+      if (error) throw error;
+
+      toast({ title: language === 'ar' ? 'تم تحديث الإعلان!' : 'Listing updated!' });
+      setShowEditDialog(false);
+      setEditingListing(null);
+      fetchListings();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteListing = async (id: string) => {
+    if (!confirm(language === 'ar' ? 'هل تريد حذف هذا الإعلان؟' : 'Delete this listing?')) return;
+    try {
+      const { error } = await supabase
+        .from('marketplace_listings')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: language === 'ar' ? 'تم حذف الإعلان' : 'Listing deleted' });
+      fetchListings();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const openEditDialog = (listing: Listing) => {
+    setEditingListing(listing);
+    setNewListing({
+      type: listing.type,
+      currency_code: listing.currency_code,
+      amount: listing.amount.toString(),
+      price_per_unit: listing.price_per_unit.toString(),
+      description: listing.description || '',
+      contact_info: listing.contact_info || '',
+      wilaya: listing.wilaya || '',
+      payment_methods: listing.payment_methods || ['hand']
+    });
+    setShowEditDialog(true);
+  };
+
+  const openContactDialog = (listing: Listing) => {
+    setContactListing(listing);
+    setContactMessage('');
+    setShowContactDialog(true);
+  };
+
+  const handleSendContactMessage = async () => {
+    if (!contactListing || !contactMessage.trim()) return;
+    try {
+      await supabase.from('messages').insert({
+        sender_id: user?.id || null,
+        receiver_id: contactListing.user_id,
+        sender_name: user ? (profile as any)?.full_name || (profile as any)?.username : guestName || 'Guest',
+        content: contactMessage.trim(),
+        listing_id: contactListing.id
+      });
+      toast({ title: language === 'ar' ? 'تم إرسال الرسالة!' : 'Message sent!' });
+      setShowContactDialog(false);
+      setContactMessage('');
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const togglePaymentMethod = (method: string) => {
+    setNewListing(prev => {
+      const methods = prev.payment_methods.includes(method)
+        ? prev.payment_methods.filter(m => m !== method)
+        : [...prev.payment_methods, method];
+      return { ...prev, payment_methods: methods.length > 0 ? methods : ['hand'] };
+    });
   };
 
   const handleAddComment = async (listingId: string) => {
@@ -357,6 +483,11 @@ const ShopPage = () => {
     });
   };
 
+  const getPaymentMethodLabel = (method: string) => {
+    const labels: any = { hand: t.hand, ccp: t.ccp, baridimob: t.baridimob, mediator: t.mediator };
+    return labels[method] || method;
+  };
+
   // Always show main content with BottomNavigation - no early returns that hide navigation
   return (
     <div className={`min-h-screen pb-20 ${darkMode ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100'}`}>
@@ -372,18 +503,8 @@ const ShopPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleLanguage}
-            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            <Globe size={20} />
-          </button>
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-          >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          <MessagesPopover darkMode={darkMode} language={language} />
+          <NotificationsPopover darkMode={darkMode} language={language} />
         </div>
       </header>
 
@@ -521,11 +642,52 @@ const ShopPage = () => {
                     </p>
                   )}
 
+                  {/* Payment Methods */}
+                  {listing.payment_methods && listing.payment_methods.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {listing.payment_methods.map(method => (
+                        <span 
+                          key={method}
+                          className={`text-xs px-2 py-1 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'}`}
+                        >
+                          {getPaymentMethodLabel(method)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {listing.contact_info && (
-                    <p className={`text-sm ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                    <p className={`text-sm mb-3 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                       📞 {listing.contact_info}
                     </p>
                   )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={() => openContactDialog(listing)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold text-sm"
+                    >
+                      <Phone size={16} />
+                      {listing.type === 'sell' ? t.contactSeller : t.contactBuyer}
+                    </button>
+                    {user?.id === listing.user_id && (
+                      <>
+                        <button
+                          onClick={() => openEditDialog(listing)}
+                          className={`p-2 rounded-xl ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteListing(listing.id)}
+                          className="p-2 rounded-xl bg-red-500/20 text-red-500 hover:bg-red-500/30"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Comments Section */}
@@ -692,6 +854,27 @@ const ShopPage = () => {
               />
             </div>
 
+            {/* Payment Methods */}
+            <div>
+              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.paymentMethod}</label>
+              <div className="flex flex-wrap gap-2">
+                {['hand', 'ccp', 'baridimob', 'mediator'].map(method => (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => togglePaymentMethod(method)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      newListing.payment_methods.includes(method)
+                        ? 'bg-blue-500 text-white'
+                        : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {getPaymentMethodLabel(method)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Contact & Wilaya */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -738,6 +921,85 @@ const ShopPage = () => {
                 {t.post}
               </button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Listing Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+          <DialogHeader>
+            <DialogTitle>{t.editListing}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setNewListing(prev => ({ ...prev, type: 'sell' }))}
+                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 ${
+                  newListing.type === 'sell' ? 'bg-green-500 text-white' : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                <TrendingUp size={18} />
+                {t.sell}
+              </button>
+              <button
+                onClick={() => setNewListing(prev => ({ ...prev, type: 'buy' }))}
+                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 ${
+                  newListing.type === 'buy' ? 'bg-blue-500 text-white' : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                <TrendingDown size={18} />
+                {t.buy}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.amount}</label>
+                <input type="number" value={newListing.amount} onChange={(e) => setNewListing(prev => ({ ...prev, amount: e.target.value }))} className={`w-full px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'}`} />
+              </div>
+              <div>
+                <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.pricePerUnit} ({t.dzd})</label>
+                <input type="number" value={newListing.price_per_unit} onChange={(e) => setNewListing(prev => ({ ...prev, price_per_unit: e.target.value }))} className={`w-full px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'}`} />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setShowEditDialog(false)} className={`flex-1 py-3 rounded-xl font-semibold ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}>{t.cancel}</button>
+              <button onClick={handleUpdateListing} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold">{t.post}</button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Dialog */}
+      <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
+        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+          <DialogHeader>
+            <DialogTitle>{contactListing?.type === 'sell' ? t.contactSeller : t.contactBuyer}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {!user && (
+              <input
+                type="text"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                placeholder={t.yourName}
+                className={`w-full px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'}`}
+              />
+            )}
+            <textarea
+              value={contactMessage}
+              onChange={(e) => setContactMessage(e.target.value)}
+              placeholder={t.messagePlaceholder}
+              rows={4}
+              className={`w-full px-4 py-3 rounded-xl resize-none ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'}`}
+            />
+            <button
+              onClick={handleSendContactMessage}
+              disabled={!contactMessage.trim() || (!user && !guestName.trim())}
+              className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white disabled:opacity-50"
+            >
+              {t.sendMessage}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
