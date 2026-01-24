@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import html2canvas from 'html2canvas';
 import CommentSection from '@/components/CommentSection';
+import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 
@@ -1451,18 +1452,7 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-8 mt-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <DollarSign size={24} />
-              <span className="text-xl font-bold">E-Sekoir</span>
-            </div>
-            <p className="text-gray-400 text-sm mb-4">{t.subtitle}</p>
-            <p className="text-gray-500 text-xs">© 2026 E-Sekoir. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

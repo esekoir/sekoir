@@ -643,7 +643,7 @@ const AccountPage = () => {
 
       {/* Charge Dialog */}
       <Dialog open={showChargeDialog} onOpenChange={setShowChargeDialog}>
-        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+        <DialogContent className={`sm:max-w-md max-h-[75vh] overflow-y-auto pb-8 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
           <DialogHeader>
             <DialogTitle className="text-center text-xl flex items-center justify-center gap-2">
               <Zap className="text-yellow-500" size={24} />
@@ -718,7 +718,7 @@ const AccountPage = () => {
 
       {/* Verification Dialog */}
       <Dialog open={showVerifyDialog} onOpenChange={setShowVerifyDialog}>
-        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+        <DialogContent className={`sm:max-w-md max-h-[75vh] overflow-y-auto pb-8 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
           <DialogHeader>
             <DialogTitle className="text-center text-xl flex items-center justify-center gap-2">
               <CheckCircle className="text-blue-500" size={24} />
