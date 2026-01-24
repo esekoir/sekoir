@@ -766,7 +766,7 @@ const ShopPage = () => {
 
       {/* Create Listing Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className={`sm:max-w-md ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+        <DialogContent className={`sm:max-w-md max-h-[80vh] overflow-y-auto pb-6 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
           <DialogHeader>
             <DialogTitle>{t.createListing}</DialogTitle>
           </DialogHeader>
@@ -927,7 +927,7 @@ const ShopPage = () => {
 
       {/* Edit Listing Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+        <DialogContent className={`sm:max-w-md max-h-[80vh] overflow-y-auto pb-6 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
           <DialogHeader>
             <DialogTitle>{t.editListing}</DialogTitle>
           </DialogHeader>
@@ -972,7 +972,7 @@ const ShopPage = () => {
 
       {/* Contact Dialog */}
       <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
-        <DialogContent className={`sm:max-w-md max-h-[85vh] overflow-y-auto ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+        <DialogContent className={`sm:max-w-md max-h-[75vh] overflow-y-auto pb-6 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
           <DialogHeader>
             <DialogTitle>{contactListing?.type === 'sell' ? t.contactSeller : t.contactBuyer}</DialogTitle>
           </DialogHeader>

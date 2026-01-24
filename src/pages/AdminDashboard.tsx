@@ -219,6 +219,19 @@ const AdminDashboard = () => {
       instagram: 'انستغرام',
       telegram: 'تيليغرام',
       whatsapp: 'واتساب',
+      pending: 'قيد الانتظار',
+      approved: 'موافق عليه',
+      rejected: 'مرفوض',
+      approve: 'موافقة',
+      reject: 'رفض',
+      dzd: 'دج',
+      paymentMethod: 'طريقة الدفع',
+      userMessage: 'رسالة المستخدم',
+      adminNote: 'ملاحظة الإدارة',
+      sendNotification: 'إرسال إشعار',
+      notificationTitle: 'عنوان الإشعار',
+      notificationMessage: 'نص الإشعار',
+      selectUser: 'اختر المستخدم',
       currencyTypes: {
         currency: 'عملة',
         crypto: 'عملة رقمية',
@@ -234,6 +247,9 @@ const AdminDashboard = () => {
       wallets: 'Wallets',
       listings: 'Listings',
       settings: 'Settings',
+      chargeRequests: 'Charge Requests',
+      verifyRequests: 'Verify Requests',
+      notifications: 'Notifications',
       search: 'Search...',
       addCurrency: 'Add Currency',
       editCurrency: 'Edit Currency',
@@ -294,6 +310,19 @@ const AdminDashboard = () => {
       instagram: 'Instagram',
       telegram: 'Telegram',
       whatsapp: 'WhatsApp',
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      approve: 'Approve',
+      reject: 'Reject',
+      dzd: 'DZD',
+      paymentMethod: 'Payment Method',
+      userMessage: 'User Message',
+      adminNote: 'Admin Note',
+      sendNotification: 'Send Notification',
+      notificationTitle: 'Notification Title',
+      notificationMessage: 'Notification Message',
+      selectUser: 'Select User',
       currencyTypes: {
         currency: 'Currency',
         crypto: 'Crypto',
@@ -350,13 +379,16 @@ const AdminDashboard = () => {
   }, [user, isAdmin, authLoading, checkingAdmin]);
 
   const fetchAllData = async () => {
-    const [currRes, profRes, commRes, walRes, listRes, settRes] = await Promise.all([
+    const [currRes, profRes, commRes, walRes, listRes, settRes, chargeRes, verifyRes, notifRes] = await Promise.all([
       supabase.from('currencies').select('*').order('display_order'),
       supabase.from('profiles').select('*').order('member_number'),
       supabase.from('comments').select('*').order('created_at', { ascending: false }),
       supabase.from('wallets').select('*, profiles(*)'),
       supabase.from('marketplace_listings').select('*').order('created_at', { ascending: false }),
-      supabase.from('site_settings').select('*')
+      supabase.from('site_settings').select('*'),
+      supabase.from('charge_requests').select('*').order('created_at', { ascending: false }),
+      supabase.from('verification_requests').select('*, verification_plans(*)').order('created_at', { ascending: false }),
+      supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(50)
     ]);
 
     if (currRes.data) setCurrencies(currRes.data);
@@ -365,6 +397,30 @@ const AdminDashboard = () => {
     if (walRes.data) setWallets(walRes.data as any);
     if (listRes.data) setListings(listRes.data);
     if (settRes.data) setSettings(settRes.data);
+    
+    // Fetch profiles for charge requests
+    if (chargeRes.data) {
+      const chargeUserIds = [...new Set(chargeRes.data.map(c => c.user_id))];
+      let chargeProfilesMap: { [key: string]: Profile } = {};
+      if (chargeUserIds.length > 0) {
+        const { data: chargeProfiles } = await supabase.from('profiles').select('*').in('user_id', chargeUserIds);
+        if (chargeProfiles) chargeProfiles.forEach(p => { chargeProfilesMap[p.user_id] = p; });
+      }
+      setChargeRequests(chargeRes.data.map(c => ({ ...c, profiles: chargeProfilesMap[c.user_id] })));
+    }
+    
+    // Fetch profiles for verification requests
+    if (verifyRes.data) {
+      const verifyUserIds = [...new Set(verifyRes.data.map(v => v.user_id))];
+      let verifyProfilesMap: { [key: string]: Profile } = {};
+      if (verifyUserIds.length > 0) {
+        const { data: verifyProfiles } = await supabase.from('profiles').select('*').in('user_id', verifyUserIds);
+        if (verifyProfiles) verifyProfiles.forEach(p => { verifyProfilesMap[p.user_id] = p; });
+      }
+      setVerifyRequests(verifyRes.data.map((v: any) => ({ ...v, profiles: verifyProfilesMap[v.user_id] })));
+    }
+    
+    if (notifRes.data) setAdminNotifications(notifRes.data);
   };
 
   const toggleDarkMode = () => {
@@ -621,12 +677,170 @@ const AdminDashboard = () => {
     l.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleApproveCharge = async (request: ChargeRequest) => {
+    try {
+      // Update request status
+      const { error: reqError } = await supabase
+        .from('charge_requests')
+        .update({ status: 'approved', admin_note: chargeNote })
+        .eq('id', request.id);
+      if (reqError) throw reqError;
+
+      // Get or create wallet
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', request.user_id)
+        .maybeSingle();
+
+      if (wallet) {
+        // Add transaction
+        await supabase.from('wallet_transactions').insert({
+          wallet_id: wallet.id,
+          user_id: request.user_id,
+          type: 'deposit',
+          amount: request.amount,
+          status: 'completed',
+          description: language === 'ar' ? 'شحن رصيد' : 'Balance charge'
+        });
+      }
+
+      // Send notification
+      await supabase.from('notifications').insert({
+        user_id: request.user_id,
+        type: 'charge_approved',
+        title_ar: 'تم شحن رصيدك',
+        title_en: 'Balance Charged',
+        message_ar: `تم شحن ${request.amount} دج إلى حسابك`,
+        message_en: `${request.amount} DZD has been added to your account`
+      });
+
+      toast({ title: language === 'ar' ? 'تمت الموافقة!' : 'Approved!' });
+      setChargeNote('');
+      fetchAllData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleRejectCharge = async (request: ChargeRequest) => {
+    try {
+      const { error } = await supabase
+        .from('charge_requests')
+        .update({ status: 'rejected', admin_note: chargeNote })
+        .eq('id', request.id);
+      if (error) throw error;
+
+      // Send notification
+      await supabase.from('notifications').insert({
+        user_id: request.user_id,
+        type: 'charge_rejected',
+        title_ar: 'تم رفض طلب الشحن',
+        title_en: 'Charge Request Rejected',
+        message_ar: chargeNote || 'تم رفض طلب الشحن الخاص بك',
+        message_en: chargeNote || 'Your charge request has been rejected'
+      });
+
+      toast({ title: language === 'ar' ? 'تم الرفض' : 'Rejected' });
+      setChargeNote('');
+      fetchAllData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleApproveVerify = async (request: VerificationRequest) => {
+    try {
+      const plan = request.verification_plans;
+      const durationMonths = plan?.duration_months || 6;
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + durationMonths);
+
+      // Update verification request
+      const { error: reqError } = await supabase
+        .from('verification_requests')
+        .update({ status: 'approved', expires_at: expiresAt.toISOString() })
+        .eq('id', request.id);
+      if (reqError) throw reqError;
+
+      // Update profile is_verified
+      const { error: profError } = await supabase
+        .from('profiles')
+        .update({ is_verified: true })
+        .eq('user_id', request.user_id);
+      if (profError) throw profError;
+
+      // Send notification
+      await supabase.from('notifications').insert({
+        user_id: request.user_id,
+        type: 'verification_approved',
+        title_ar: 'تم توثيق حسابك!',
+        title_en: 'Account Verified!',
+        message_ar: `تم توثيق حسابك بنجاح لمدة ${durationMonths} أشهر`,
+        message_en: `Your account has been verified for ${durationMonths} months`
+      });
+
+      toast({ title: language === 'ar' ? 'تم التوثيق!' : 'Verified!' });
+      fetchAllData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleRejectVerify = async (request: VerificationRequest) => {
+    try {
+      const { error } = await supabase
+        .from('verification_requests')
+        .update({ status: 'rejected' })
+        .eq('id', request.id);
+      if (error) throw error;
+
+      // Send notification
+      await supabase.from('notifications').insert({
+        user_id: request.user_id,
+        type: 'verification_rejected',
+        title_ar: 'تم رفض طلب التوثيق',
+        title_en: 'Verification Rejected',
+        message_ar: 'تم رفض طلب التوثيق الخاص بك',
+        message_en: 'Your verification request has been rejected'
+      });
+
+      toast({ title: language === 'ar' ? 'تم الرفض' : 'Rejected' });
+      fetchAllData();
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const colors: any = {
+      pending: 'bg-yellow-500/20 text-yellow-500',
+      approved: 'bg-green-500/20 text-green-500',
+      rejected: 'bg-red-500/20 text-red-500',
+      completed: 'bg-green-500/20 text-green-500'
+    };
+    return colors[status] || 'bg-gray-500/20 text-gray-500';
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-DZ' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const tabs = [
     { key: 'currencies', icon: Coins, label: t.currencies },
     { key: 'users', icon: Users, label: t.users },
     { key: 'wallets', icon: Wallet, label: t.wallets },
+    { key: 'chargeRequests', icon: Zap, label: t.chargeRequests },
+    { key: 'verifyRequests', icon: Shield, label: t.verifyRequests },
     { key: 'listings', icon: Store, label: t.listings },
     { key: 'comments', icon: MessageSquare, label: t.comments },
+    { key: 'notifications', icon: Bell, label: t.notifications },
     { key: 'settings', icon: Settings, label: t.settings },
   ] as const;
 
@@ -996,6 +1210,202 @@ const AdminDashboard = () => {
                     >
                       <Trash2 size={16} />
                     </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Charge Requests Tab */}
+        {activeTab === 'chargeRequests' && (
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl overflow-hidden`}>
+            <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              {chargeRequests.length === 0 ? (
+                <div className={`p-8 text-center ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {t.noData}
+                </div>
+              ) : (
+                chargeRequests.map((request) => (
+                  <div key={request.id} className={`p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                          <Zap className="text-yellow-500" size={20} />
+                        </div>
+                        <div>
+                          <p className={`font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                            {request.profiles?.full_name || request.profiles?.username || 'User'}
+                          </p>
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {formatDate(request.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(request.status)}`}>
+                        {request.status === 'pending' ? t.pending : request.status === 'approved' ? t.approved : request.status === 'rejected' ? t.rejected : request.status}
+                      </span>
+                    </div>
+                    <div className={`${darkMode ? 'bg-gray-700/50' : 'bg-gray-100'} rounded-xl p-3 mb-3`}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{t.amount}</span>
+                        <span className="font-bold text-xl text-emerald-500">{request.amount} {t.dzd}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{t.paymentMethod}</span>
+                        <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {request.payment_method.toUpperCase()}
+                        </span>
+                      </div>
+                      {request.user_message && (
+                        <div className="mt-2 pt-2 border-t border-gray-600">
+                          <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>{t.userMessage}:</span>
+                          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{request.user_message}</p>
+                        </div>
+                      )}
+                    </div>
+                    {request.status === 'pending' && (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          placeholder={t.adminNote}
+                          value={chargeNote}
+                          onChange={(e) => setChargeNote(e.target.value)}
+                          className={`w-full px-3 py-2 rounded-lg text-sm ${
+                            darkMode ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-100 text-gray-800 placeholder-gray-400'
+                          }`}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleApproveCharge(request)}
+                            className="flex-1 py-2 rounded-lg font-semibold bg-green-500/20 text-green-500 hover:bg-green-500/30 flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle size={16} />
+                            {t.approve}
+                          </button>
+                          <button
+                            onClick={() => handleRejectCharge(request)}
+                            className="flex-1 py-2 rounded-lg font-semibold bg-red-500/20 text-red-500 hover:bg-red-500/30 flex items-center justify-center gap-2"
+                          >
+                            <XCircle size={16} />
+                            {t.reject}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Verification Requests Tab */}
+        {activeTab === 'verifyRequests' && (
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl overflow-hidden`}>
+            <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              {verifyRequests.length === 0 ? (
+                <div className={`p-8 text-center ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {t.noData}
+                </div>
+              ) : (
+                verifyRequests.map((request) => (
+                  <div key={request.id} className={`p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <Shield className="text-blue-500" size={20} />
+                        </div>
+                        <div>
+                          <p className={`font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                            {request.profiles?.full_name || request.profiles?.username || 'User'}
+                          </p>
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {formatDate(request.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusBadge(request.status)}`}>
+                        {request.status === 'pending' ? t.pending : request.status === 'approved' ? t.approved : request.status === 'rejected' ? t.rejected : request.status}
+                      </span>
+                    </div>
+                    <div className={`${darkMode ? 'bg-gray-700/50' : 'bg-gray-100'} rounded-xl p-3 mb-3`}>
+                      <div className="flex justify-between items-center">
+                        <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                          {language === 'ar' ? 'الباقة' : 'Plan'}
+                        </span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {language === 'ar' ? request.verification_plans?.name_ar : request.verification_plans?.name_en}
+                          {' - '}
+                          <span className="text-emerald-500">{request.verification_plans?.price} {t.dzd}</span>
+                        </span>
+                      </div>
+                    </div>
+                    {request.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApproveVerify(request)}
+                          className="flex-1 py-2 rounded-lg font-semibold bg-green-500/20 text-green-500 hover:bg-green-500/30 flex items-center justify-center gap-2"
+                        >
+                          <CheckCircle size={16} />
+                          {t.approve}
+                        </button>
+                        <button
+                          onClick={() => handleRejectVerify(request)}
+                          className="flex-1 py-2 rounded-lg font-semibold bg-red-500/20 text-red-500 hover:bg-red-500/30 flex items-center justify-center gap-2"
+                        >
+                          <XCircle size={16} />
+                          {t.reject}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl overflow-hidden`}>
+            <div className="p-4 border-b border-gray-700">
+              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {language === 'ar' ? 'آخر 50 إشعار في النظام' : 'Last 50 system notifications'}
+              </p>
+            </div>
+            <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} max-h-[500px] overflow-y-auto`}>
+              {adminNotifications.length === 0 ? (
+                <div className={`p-8 text-center ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {t.noData}
+                </div>
+              ) : (
+                adminNotifications.map((notif) => (
+                  <div key={notif.id} className={`p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        notif.type.includes('approved') ? 'bg-green-500/20' : 
+                        notif.type.includes('rejected') ? 'bg-red-500/20' : 'bg-blue-500/20'
+                      }`}>
+                        <Bell size={16} className={
+                          notif.type.includes('approved') ? 'text-green-500' : 
+                          notif.type.includes('rejected') ? 'text-red-500' : 'text-blue-500'
+                        } />
+                      </div>
+                      <div className="flex-1">
+                        <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {language === 'ar' ? notif.title_ar : notif.title_en}
+                        </p>
+                        {(notif.message_ar || notif.message_en) && (
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {language === 'ar' ? notif.message_ar : notif.message_en}
+                          </p>
+                        )}
+                        <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {formatDate(notif.created_at)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
