@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
-import html2canvas from 'html2canvas';
+import { useCardImageGenerator } from '@/hooks/useCardImageGenerator';
 import CommentSection from '@/components/CommentSection';
 import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const { toast } = useToast();
+  const { downloadCardImage } = useCardImageGenerator();
   const [language, setLanguage] = useState<'ar' | 'en'>('en');
   const [darkMode, setDarkMode] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -311,23 +312,23 @@ const Index = () => {
     setFavorites(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
   };
 
-  // Download card as image function
-  const downloadCardAsImage = async (cardId: string, cardName: string) => {
-    const cardElement = document.getElementById(`card-${cardId}`);
-    if (!cardElement) return;
-
+  // Download card as branded image function
+  const downloadCardAsImage = async (
+    cardId: string, 
+    cardName: string, 
+    cardType: 'currency' | 'crypto' | 'gold' | 'transfer',
+    prices: { label: string; value: number; color?: string }[],
+    change24h?: number
+  ) => {
     try {
-      const canvas = await html2canvas(cardElement, {
-        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-      });
-
-      const link = document.createElement('a');
-      link.download = `${cardName}-${new Date().toLocaleDateString('en-US').replace(/\//g, '-')}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      await downloadCardImage({
+        name: cardName,
+        symbol: cardId.toUpperCase(),
+        type: cardType,
+        prices,
+        change24h,
+        language
+      }, `${cardId}-esekoir`);
 
       toast({
         title: language === 'ar' ? 'تم تحميل الصورة بنجاح!' : 'Image downloaded successfully!',
@@ -1055,19 +1056,30 @@ const Index = () => {
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
             <button 
-              onClick={() => downloadCardAsImage(item.id, item.name)}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+              onClick={() => downloadCardAsImage(
+                item.id, 
+                item.name, 
+                'currency',
+                [
+                  { label: t.officialBank, value: item.official },
+                  { label: t.squareBuy, value: item.squareBuy, color: '#22c55e' },
+                  { label: t.squareSell, value: item.squareSell, color: '#ef4444' }
+                ],
+                item.change24h
+              )}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full p-1.5 transition-colors"
+              title={t.download}
             >
-              <Download size={12} />
-              {t.download}
+              <Download size={14} />
             </button>
           </div>
-          <div className="flex items-center gap-3 mb-3">
+          {/* Header - with top margin to avoid buttons */}
+          <div className="flex items-center gap-3 mb-3 mt-6">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
             </div>
-            <div>
-              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 truncate">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
             </div>
           </div>
@@ -1105,19 +1117,29 @@ const Index = () => {
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
             <button 
-              onClick={() => downloadCardAsImage(item.id, item.name)}
-              className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+              onClick={() => downloadCardAsImage(
+                item.id, 
+                item.name, 
+                'crypto',
+                [
+                  { label: t.priceInDZD, value: item.price.dzd },
+                  { label: t.priceInUSD, value: item.price.usd }
+                ],
+                item.change24h
+              )}
+              className="bg-purple-500 hover:bg-purple-600 text-white rounded-full p-1.5 transition-colors"
+              title={t.download}
             >
-              <Download size={12} />
-              {t.download}
+              <Download size={14} />
             </button>
           </div>
-          <div className="flex items-center gap-3 mb-3">
+          {/* Header - with top margin to avoid buttons */}
+          <div className="flex items-center gap-3 mb-3 mt-6">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
             </div>
-            <div>
-              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 truncate">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
             </div>
           </div>
@@ -1149,19 +1171,26 @@ const Index = () => {
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
             <button 
-              onClick={() => downloadCardAsImage(item.id, item.name)}
-              className="bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+              onClick={() => downloadCardAsImage(
+                item.id, 
+                item.name, 
+                'gold',
+                [{ label: `${t.buy} (${language === 'ar' ? 'للجرام' : 'per gram'})`, value: item.buy }],
+                item.change24h
+              )}
+              className="bg-amber-500 hover:bg-amber-600 text-white rounded-full p-1.5 transition-colors"
+              title={t.download}
             >
-              <Download size={12} />
-              {t.download}
+              <Download size={14} />
             </button>
           </div>
-          <div className="flex items-center gap-3 mb-3">
+          {/* Header - with top margin to avoid buttons */}
+          <div className="flex items-center gap-3 mb-3 mt-6">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
             </div>
-            <div>
-              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 truncate">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
             </div>
           </div>
@@ -1188,19 +1217,28 @@ const Index = () => {
               <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-500"} />
             </button>
             <button 
-              onClick={() => downloadCardAsImage(item.id, item.name)}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 transition-colors"
+              onClick={() => downloadCardAsImage(
+                item.id, 
+                item.name, 
+                'transfer',
+                [
+                  { label: t.buy, value: item.buy, color: '#22c55e' },
+                  { label: t.sell, value: item.sell, color: '#ef4444' }
+                ]
+              )}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-full p-1.5 transition-colors"
+              title={t.download}
             >
-              <Download size={12} />
-              {t.download}
+              <Download size={14} />
             </button>
           </div>
-          <div className="flex items-center gap-3 mb-3">
+          {/* Header - with top margin to avoid buttons */}
+          <div className="flex items-center gap-3 mb-3 mt-6">
             <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden shadow-md">
               {getCurrencyIcon(item.id, "w-12 h-12")}
             </div>
-            <div>
-              <h3 className="font-bold text-gray-800 dark:text-gray-200">{item.name}</h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 truncate">{item.name}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">{item.symbol}</p>
             </div>
           </div>

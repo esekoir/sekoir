@@ -51,7 +51,7 @@ export const CurrencyCard: React.FC<CurrencyCardProps> = ({
         <LiveDot size="sm" />
       </div>
       
-      {/* Actions */}
+      {/* Actions - positioned to avoid overlap with header */}
       <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button 
           onClick={onToggleFavorite}
@@ -64,20 +64,20 @@ export const CurrencyCard: React.FC<CurrencyCardProps> = ({
         </button>
         <button 
           onClick={onDownload}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-3 py-1.5 text-xs font-semibold flex items-center gap-1 transition-colors"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full p-1.5 shadow-md hover:scale-110 transition-transform"
+          title={t.download}
         >
-          <Download size={14} />
-          {t.download}
+          <Download size={16} />
         </button>
       </div>
 
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
+      {/* Header - with padding to avoid action buttons */}
+      <div className="flex items-center gap-3 mb-4 mt-6">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground text-xl shadow-lg">
           {icon}
         </div>
-        <div>
-          <h3 className="font-bold text-card-foreground">{name}</h3>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-card-foreground truncate">{name}</h3>
           <p className="text-xs text-muted-foreground">{symbol}</p>
         </div>
       </div>
