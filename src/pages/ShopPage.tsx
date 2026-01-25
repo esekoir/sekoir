@@ -67,6 +67,7 @@ const ShopPage = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
+  const [showLoginRequiredDialog, setShowLoginRequiredDialog] = useState(false);
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
   const [contactListing, setContactListing] = useState<Listing | null>(null);
   const [contactMessage, setContactMessage] = useState('');
@@ -127,7 +128,11 @@ const ShopPage = () => {
       contactSeller: 'تواصل مع البائع',
       contactBuyer: 'تواصل مع المشتري',
       sendMessage: 'إرسال رسالة',
-      messagePlaceholder: 'اكتب رسالتك هنا...'
+      messagePlaceholder: 'اكتب رسالتك هنا...',
+      loginRequired: 'يجب تسجيل الدخول',
+      loginRequiredDesc: 'للتواصل مع البائع أو المشتري، يجب أن تكون مسجلاً',
+      loginBtn: 'تسجيل الدخول',
+      registerBtn: 'إنشاء حساب جديد'
     },
     en: {
       title: 'Currency Market',
@@ -167,7 +172,11 @@ const ShopPage = () => {
       contactSeller: 'Contact Seller',
       contactBuyer: 'Contact Buyer',
       sendMessage: 'Send Message',
-      messagePlaceholder: 'Write your message here...'
+      messagePlaceholder: 'Write your message here...',
+      loginRequired: 'Login Required',
+      loginRequiredDesc: 'To contact the seller or buyer, you must be logged in',
+      loginBtn: 'Login',
+      registerBtn: 'Create Account'
     }
   };
 
@@ -367,6 +376,11 @@ const ShopPage = () => {
   };
 
   const openContactDialog = (listing: Listing) => {
+    // Check if user is logged in
+    if (!user) {
+      setShowLoginRequiredDialog(true);
+      return;
+    }
     setContactListing(listing);
     setContactMessage('');
     setShowContactDialog(true);
@@ -970,22 +984,13 @@ const ShopPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Contact Dialog */}
+      {/* Contact Dialog - Only for logged in users */}
       <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
         <DialogContent className={`sm:max-w-md max-h-[75vh] overflow-y-auto pb-6 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
           <DialogHeader>
             <DialogTitle>{contactListing?.type === 'sell' ? t.contactSeller : t.contactBuyer}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {!user && (
-              <input
-                type="text"
-                value={guestName}
-                onChange={(e) => setGuestName(e.target.value)}
-                placeholder={t.yourName}
-                className={`w-full px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'}`}
-              />
-            )}
             <textarea
               value={contactMessage}
               onChange={(e) => setContactMessage(e.target.value)}
@@ -995,11 +1000,45 @@ const ShopPage = () => {
             />
             <button
               onClick={handleSendContactMessage}
-              disabled={!contactMessage.trim() || (!user && !guestName.trim())}
+              disabled={!contactMessage.trim()}
               className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white disabled:opacity-50"
             >
               {t.sendMessage}
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Login Required Dialog - For guests trying to contact */}
+      <Dialog open={showLoginRequiredDialog} onOpenChange={setShowLoginRequiredDialog}>
+        <DialogContent className={`sm:max-w-sm ${darkMode ? 'bg-gray-800 text-white border-gray-700' : ''}`}>
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">{t.loginRequired}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {t.loginRequiredDesc}
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowLoginRequiredDialog(false);
+                  navigate('/auth?mode=login');
+                }}
+                className="w-full py-3 rounded-xl font-bold bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
+              >
+                {t.loginBtn}
+              </button>
+              <button
+                onClick={() => {
+                  setShowLoginRequiredDialog(false);
+                  navigate('/auth?mode=register');
+                }}
+                className={`w-full py-3 rounded-xl font-semibold ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+              >
+                {t.registerBtn}
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
