@@ -5,6 +5,7 @@ import {
   Zap, Award, Moon, Sun, Chrome, Settings, Users, MessageSquare, Coins,
   ChevronLeft, ChevronRight, Trash2, Edit, Plus, Home, ShoppingCart, User, Wifi
 } from 'lucide-react';
+import BottomNavigation from '@/components/BottomNavigation';
 import {
   Dialog,
   DialogContent,
@@ -1671,33 +1672,7 @@ const IndexPHP = () => {
       </footer>
 
       {/* Bottom Navigation */}
-      <nav className="bottom-nav">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-around items-center">
-            <button 
-              onClick={() => handleNavClick('home')}
-              className={`bottom-nav-item ${activeNavItem === 'home' ? 'active' : ''}`}
-            >
-              <Home size={22} />
-              <span>{language === 'ar' ? 'الرئيسية' : 'Home'}</span>
-            </button>
-            <button 
-              onClick={() => handleNavClick('shop')}
-              className={`bottom-nav-item ${activeNavItem === 'shop' ? 'active' : ''}`}
-            >
-              <ShoppingCart size={22} />
-              <span>{language === 'ar' ? 'تسوق' : 'Shop'}</span>
-            </button>
-            <button 
-              onClick={() => handleNavClick('account')}
-              className={`bottom-nav-item ${activeNavItem === 'account' ? 'active' : ''}`}
-            >
-              <User size={22} />
-              <span>{language === 'ar' ? 'الحساب' : 'Account'}</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <BottomNavigation />
 
       {/* Charge Coming Soon Dialog */}
       <Dialog open={showChargeDialog} onOpenChange={setShowChargeDialog}>
