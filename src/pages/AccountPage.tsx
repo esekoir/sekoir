@@ -62,6 +62,13 @@ const AccountPage = () => {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [submittingCharge, setSubmittingCharge] = useState(false);
   const [submittingVerify, setSubmittingVerify] = useState(false);
+  const [cardSettings, setCardSettings] = useState<any>({
+    background_type: 'gradient',
+    gradient_from: '#10b981',
+    gradient_via: '#059669',
+    gradient_to: '#14b8a6',
+    background_image: null
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editData, setEditData] = useState({
     full_name: '',
@@ -92,8 +99,21 @@ const AccountPage = () => {
       fetchTransactions();
       checkAdminStatus();
       fetchVerificationPlans();
+      fetchCardSettings();
     }
   }, [user]);
+
+  const fetchCardSettings = async () => {
+    const { data } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'card_settings')
+      .maybeSingle();
+    
+    if (data?.value) {
+      setCardSettings(data.value);
+    }
+  };
 
   const checkAdminStatus = async () => {
     if (!user) return;
@@ -413,8 +433,17 @@ const AccountPage = () => {
         {/* Profile Card */}
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden mb-6`}>
           {/* Bank Card Style Header */}
-          <div className="bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 p-6 text-white relative overflow-hidden">
+          <div 
+            className="p-6 text-white relative overflow-hidden"
+            style={cardSettings.background_type === 'image' && cardSettings.background_image
+              ? { backgroundImage: `url(${cardSettings.background_image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+              : { background: `linear-gradient(135deg, ${cardSettings.gradient_from || '#10b981'}, ${cardSettings.gradient_via || '#059669'}, ${cardSettings.gradient_to || '#14b8a6'})` }
+            }
+          >
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/10 transform translate-x-32 -translate-y-32"></div>
+            
+            {/* E-SEKOIR Branding */}
+            <div className="text-xs opacity-80 mb-1 relative z-10">E-SEKOIR 2026</div>
             
             <div className="flex items-start justify-between relative z-10">
               <div className="flex items-center gap-4">
@@ -443,7 +472,7 @@ const AccountPage = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">{(profile as any)?.full_name || 'E-Sekoir User'}</h2>
-                  <p className="text-emerald-100">@{(profile as any)?.username || 'user'}</p>
+                  <p className="text-white/80">@{(profile as any)?.username || 'user'}</p>
                   <div className="flex items-center gap-2 mt-1">
                     {(profile as any)?.is_verified ? (
                       <span className="flex items-center gap-1 text-xs bg-white/20 px-2 py-0.5 rounded-full">
@@ -461,8 +490,9 @@ const AccountPage = () => {
               </div>
             </div>
 
-            <div className="mt-6 font-mono text-lg tracking-widest">{getCardNumber()}</div>
-            <div className="text-xs text-emerald-100 mt-1">{t.memberNumber}: {(profile as any)?.member_number || '---'}</div>
+            {/* Card Number - 16 digits */}
+            <div className="mt-6 font-mono text-lg tracking-widest relative z-10">{getCardNumber()}</div>
+            <div className="text-xs text-white/80 mt-1 relative z-10">{t.memberNumber}: {(profile as any)?.member_number || '---'}</div>
           </div>
 
           {/* Balance Section */}

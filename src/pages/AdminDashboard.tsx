@@ -1505,6 +1505,152 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* Card Customization Settings */}
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6`}>
+              <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                <CreditCard size={20} />
+                {language === 'ar' ? 'تخصيص البطاقة' : 'Card Customization'}
+              </h3>
+              
+              {/* Background Type Selection */}
+              <div className="mb-4">
+                <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {language === 'ar' ? 'نوع الخلفية' : 'Background Type'}
+                </label>
+                <div className="flex gap-4">
+                  <label className={`flex items-center gap-2 cursor-pointer ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <input
+                      type="radio"
+                      name="cardBgType"
+                      checked={getSetting('card_settings').background_type !== 'image'}
+                      onChange={() => updateSettingValue('card_settings', 'background_type', 'gradient')}
+                      className="accent-emerald-600"
+                    />
+                    {language === 'ar' ? 'تدرج لوني' : 'Gradient'}
+                  </label>
+                  <label className={`flex items-center gap-2 cursor-pointer ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <input
+                      type="radio"
+                      name="cardBgType"
+                      checked={getSetting('card_settings').background_type === 'image'}
+                      onChange={() => updateSettingValue('card_settings', 'background_type', 'image')}
+                      className="accent-emerald-600"
+                    />
+                    {language === 'ar' ? 'صورة' : 'Image'}
+                  </label>
+                </div>
+              </div>
+
+              {/* Gradient Colors */}
+              {getSetting('card_settings').background_type !== 'image' && (
+                <div className="grid gap-4 md:grid-cols-3 mb-4">
+                  <div>
+                    <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {language === 'ar' ? 'اللون الأول' : 'From Color'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={getSetting('card_settings').gradient_from || '#10b981'}
+                        onChange={(e) => updateSettingValue('card_settings', 'gradient_from', e.target.value)}
+                        className="w-12 h-12 rounded-lg cursor-pointer border-0"
+                      />
+                      <input
+                        type="text"
+                        value={getSetting('card_settings').gradient_from || '#10b981'}
+                        onChange={(e) => updateSettingValue('card_settings', 'gradient_from', e.target.value)}
+                        className={`flex-1 px-3 py-2 rounded-lg border ${
+                          darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {language === 'ar' ? 'اللون الوسط' : 'Via Color'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={getSetting('card_settings').gradient_via || '#059669'}
+                        onChange={(e) => updateSettingValue('card_settings', 'gradient_via', e.target.value)}
+                        className="w-12 h-12 rounded-lg cursor-pointer border-0"
+                      />
+                      <input
+                        type="text"
+                        value={getSetting('card_settings').gradient_via || '#059669'}
+                        onChange={(e) => updateSettingValue('card_settings', 'gradient_via', e.target.value)}
+                        className={`flex-1 px-3 py-2 rounded-lg border ${
+                          darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {language === 'ar' ? 'اللون الأخير' : 'To Color'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={getSetting('card_settings').gradient_to || '#14b8a6'}
+                        onChange={(e) => updateSettingValue('card_settings', 'gradient_to', e.target.value)}
+                        className="w-12 h-12 rounded-lg cursor-pointer border-0"
+                      />
+                      <input
+                        type="text"
+                        value={getSetting('card_settings').gradient_to || '#14b8a6'}
+                        onChange={(e) => updateSettingValue('card_settings', 'gradient_to', e.target.value)}
+                        className={`flex-1 px-3 py-2 rounded-lg border ${
+                          darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Image Upload */}
+              {getSetting('card_settings').background_type === 'image' && (
+                <div className="mb-4">
+                  <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {language === 'ar' ? 'رابط صورة الخلفية (الحجم المثالي: 400×250 بكسل)' : 'Background Image URL (Optimal: 400×250px)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={getSetting('card_settings').background_image || ''}
+                    onChange={(e) => updateSettingValue('card_settings', 'background_image', e.target.value)}
+                    placeholder="https://example.com/card-bg.jpg"
+                    className={`w-full px-4 py-3 rounded-xl border ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400'
+                    }`}
+                  />
+                </div>
+              )}
+
+              {/* Preview */}
+              <div className="mt-4">
+                <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {language === 'ar' ? 'معاينة البطاقة' : 'Card Preview'}
+                </label>
+                <div 
+                  className="w-full max-w-md h-48 rounded-2xl p-5 text-white relative overflow-hidden shadow-xl"
+                  style={getSetting('card_settings').background_type === 'image' && getSetting('card_settings').background_image
+                    ? { backgroundImage: `url(${getSetting('card_settings').background_image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                    : { background: `linear-gradient(135deg, ${getSetting('card_settings').gradient_from || '#10b981'}, ${getSetting('card_settings').gradient_via || '#059669'}, ${getSetting('card_settings').gradient_to || '#14b8a6'})` }
+                  }
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 transform translate-x-16 -translate-y-16"></div>
+                  <div className="relative z-10">
+                    <div className="text-sm opacity-80 mb-1">E-SEKOIR 2026</div>
+                    <div className="text-xl font-bold mb-4">{language === 'ar' ? 'اسم المستخدم' : 'User Name'}</div>
+                    <div className="font-mono text-lg tracking-widest mt-8">2026 1600 0000 0001</div>
+                    <div className="text-xs opacity-80 mt-1">{language === 'ar' ? 'رقم العضوية' : 'Member #'}: 1</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Shop Settings */}
             <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6`}>
               <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
