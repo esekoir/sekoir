@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import {
   Users, MessageSquare, Coins, Settings, Shield, Trash2, Edit, Plus, 
   CheckCircle, XCircle, Search, Moon, Sun, Globe, Save, Wallet, RefreshCw,
-  ShoppingCart, CreditCard, Image, FileText, Store, Bell, Zap
+  ShoppingCart, CreditCard, Image, FileText, Store, Bell, Zap, Upload
 } from 'lucide-react';
 import {
   Dialog,
@@ -117,11 +118,12 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { darkMode, toggleDarkMode, language, toggleLanguage } = useLanguage();
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'ar' | 'en'>('ar');
   const [activeTab, setActiveTab] = useState<'currencies' | 'users' | 'comments' | 'wallets' | 'listings' | 'chargeRequests' | 'verifyRequests' | 'notifications' | 'settings'>('currencies');
+  const [uploadingCardBg, setUploadingCardBg] = useState(false);
+  const cardBgInputRef = useRef<HTMLInputElement>(null);
   
   // Data states
   const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -334,13 +336,6 @@ const AdminDashboard = () => {
 
   const t = translations[language];
 
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(savedDarkMode);
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -423,14 +418,38 @@ const AdminDashboard = () => {
     if (notifRes.data) setAdminNotifications(notifRes.data);
   };
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  // Card background image upload handler
+  const handleCardBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: language === 'ar' ? 'الحجم أكبر من 2MB' : 'File too large (max 2MB)', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingCardBg(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `card-backgrounds/card-bg-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('site-assets')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('site-assets')
+        .getPublicUrl(filePath);
+
+      updateSettingValue('card_settings', 'background_image', publicUrl);
+      
+      toast({ title: language === 'ar' ? 'تم رفع الصورة بنجاح' : 'Image uploaded successfully' });
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    } finally {
+      setUploadingCardBg(false);
     }
   };
 
@@ -860,7 +879,7 @@ const AdminDashboard = () => {
             <RefreshCw size={20} />
           </button>
           <button
-            onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+            onClick={toggleLanguage}
             className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           >
             <Globe size={20} />
@@ -1612,19 +1631,79 @@ const AdminDashboard = () => {
 
               {/* Image Upload */}
               {getSetting('card_settings').background_type === 'image' && (
-                <div className="mb-4">
-                  <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {language === 'ar' ? 'رابط صورة الخلفية (الحجم المثالي: 400×250 بكسل)' : 'Background Image URL (Optimal: 400×250px)'}
-                  </label>
-                  <input
-                    type="text"
-                    value={getSetting('card_settings').background_image || ''}
-                    onChange={(e) => updateSettingValue('card_settings', 'background_image', e.target.value)}
-                    placeholder="https://example.com/card-bg.jpg"
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400'
-                    }`}
-                  />
+                <div className="mb-4 space-y-4">
+                  {/* File Upload */}
+                  <div>
+                    <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {language === 'ar' ? 'رفع صورة خلفية (الحجم المثالي: 400×250 بكسل)' : 'Upload Background Image (Optimal: 400×250px)'}
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        ref={cardBgInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCardBgUpload}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => cardBgInputRef.current?.click()}
+                        disabled={uploadingCardBg}
+                        className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                          darkMode 
+                            ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-500 text-white' 
+                            : 'bg-emerald-500 hover:bg-emerald-600 border-emerald-400 text-white'
+                        } ${uploadingCardBg ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <Upload size={18} />
+                        {uploadingCardBg 
+                          ? (language === 'ar' ? 'جاري الرفع...' : 'Uploading...') 
+                          : (language === 'ar' ? 'رفع صورة' : 'Upload Image')
+                        }
+                      </button>
+                      {getSetting('card_settings').background_image && (
+                        <button
+                          onClick={() => updateSettingValue('card_settings', 'background_image', '')}
+                          className={`px-4 py-3 rounded-xl border transition-colors ${
+                            darkMode 
+                              ? 'bg-red-600/20 hover:bg-red-600/30 border-red-500/50 text-red-400' 
+                              : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600'
+                          }`}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Or URL Input */}
+                  <div>
+                    <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {language === 'ar' ? 'أو أدخل رابط الصورة' : 'Or enter image URL'}
+                    </label>
+                    <input
+                      type="text"
+                      value={getSetting('card_settings').background_image || ''}
+                      onChange={(e) => updateSettingValue('card_settings', 'background_image', e.target.value)}
+                      placeholder="https://example.com/card-bg.jpg"
+                      className={`w-full px-4 py-3 rounded-xl border ${
+                        darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Current Image Preview */}
+                  {getSetting('card_settings').background_image && (
+                    <div className="p-3 rounded-xl border border-dashed border-gray-500">
+                      <p className={`text-xs mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {language === 'ar' ? 'الصورة الحالية:' : 'Current image:'}
+                      </p>
+                      <img 
+                        src={getSetting('card_settings').background_image} 
+                        alt="Card background" 
+                        className="w-full max-w-xs h-auto rounded-lg object-cover"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
