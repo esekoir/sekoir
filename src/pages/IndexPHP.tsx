@@ -19,6 +19,7 @@ import { getCurrencyIcon } from '@/components/icons/CurrencyIcons';
 import { useCardImageGenerator } from '@/hooks/useCardImageGenerator';
 import CommentSectionPHP from '@/components/CommentSectionPHP';
 import { authApi, profilesApi, currenciesApi, commentsApi, Profile, Currency, Comment } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -93,6 +94,13 @@ const IndexPHP = () => {
   const [completeProfileError, setCompleteProfileError] = useState('');
   const [showChargeDialog, setShowChargeDialog] = useState(false);
   const [activeNavItem, setActiveNavItem] = useState('home');
+  const [cardSettings, setCardSettings] = useState<any>({
+    background_type: 'gradient',
+    gradient_from: '#10b981',
+    gradient_via: '#059669',
+    gradient_to: '#14b8a6',
+    background_image: null
+  });
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -254,7 +262,25 @@ const IndexPHP = () => {
     };
 
     checkAuth();
+    fetchCardSettings();
   }, []);
+
+  // Fetch card settings from Supabase
+  const fetchCardSettings = async () => {
+    try {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'card_settings')
+        .maybeSingle();
+      
+      if (data?.value) {
+        setCardSettings(data.value);
+      }
+    } catch (error) {
+      console.error('Error fetching card settings:', error);
+    }
+  };
 
   // Admin data fetching
   const fetchAdminData = async () => {
@@ -733,6 +759,26 @@ const IndexPHP = () => {
       }
     };
 
+    // Determine card background style
+    const getCardBackground = () => {
+      // Only main card uses custom settings
+      if (isMain && cardSettings.background_type === 'image' && cardSettings.background_image) {
+        return { 
+          backgroundImage: `url(${cardSettings.background_image})`, 
+          backgroundSize: 'cover', 
+          backgroundPosition: 'center' 
+        };
+      } else if (isMain) {
+        return { 
+          background: `linear-gradient(135deg, ${cardSettings.gradient_from || '#10b981'}, ${cardSettings.gradient_via || '#059669'}, ${cardSettings.gradient_to || '#14b8a6'})` 
+        };
+      }
+      // Other cards keep default gradient
+      return {
+        background: `linear-gradient(135deg, ${gradient.includes('emerald') ? '#059669' : gradient.includes('purple') ? '#7c3aed' : gradient.includes('amber') ? '#d97706' : '#1e40af'} 0%, ${gradient.includes('emerald') ? '#064e3b' : gradient.includes('purple') ? '#4c1d95' : gradient.includes('amber') ? '#92400e' : '#1e3a8a'} 100%)`
+      };
+    };
+
     return (
       <div className="card-3d-container snap-center" onClick={handleSimpleFlip}>
         <div className={`card-3d ${isFlipped ? 'flipped' : ''}`}>
@@ -740,9 +786,7 @@ const IndexPHP = () => {
           <div
             className={`card-3d-face card-3d-front ${gradient} relative`}
             onClick={isMain ? handleMainCardClick : undefined}
-            style={{
-              background: `linear-gradient(135deg, ${gradient.includes('emerald') ? '#059669' : gradient.includes('purple') ? '#7c3aed' : gradient.includes('amber') ? '#d97706' : '#1e40af'} 0%, ${gradient.includes('emerald') ? '#064e3b' : gradient.includes('purple') ? '#4c1d95' : gradient.includes('amber') ? '#92400e' : '#1e3a8a'} 100%)`,
-            }}
+            style={getCardBackground()}
           >
             {/* Card Background Pattern */}
             <div className="absolute inset-0 opacity-10">
