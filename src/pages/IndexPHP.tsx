@@ -40,6 +40,7 @@ const IndexPHP = () => {
   const [calcTo, setCalcTo] = useState('dzd');
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<any>(null);
+  const [dbCurrencies, setDbCurrencies] = useState<Currency[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -357,9 +358,19 @@ const IndexPHP = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const currencyResponse = await fetch('https://api.exchangerate-api.com/v4/latest/DZD');
+      // Fetch both API rates and DB currencies
+      const [currencyResponse, dbCurrResponse] = await Promise.all([
+        fetch('https://api.exchangerate-api.com/v4/latest/DZD'),
+        supabase.from('currencies').select('*').eq('is_active', true).order('display_order')
+      ]);
+      
       const currencyData = await currencyResponse.json();
       setRates({ currencies: currencyData.rates });
+      
+      if (dbCurrResponse.data) {
+        setDbCurrencies(dbCurrResponse.data);
+      }
+      
       setLastUpdate(new Date());
     } catch (error) {
       setRates({ currencies: { EUR: 0.00665, USD: 0.00729, GBP: 0.00577, CAD: 0.01023, TRY: 0.21, AED: 0.0268 } });
@@ -644,71 +655,112 @@ const IndexPHP = () => {
     return result;
   };
 
-  // Exchange data
+  // Helper to get DB currency price or fallback to API rate
+  const getDbCurrencyPrice = (code: string, type: 'buy' | 'sell', fallbackRate?: number) => {
+    const dbCurrency = dbCurrencies.find(c => c.code.toLowerCase() === code.toLowerCase());
+    if (dbCurrency) {
+      return type === 'buy' ? (dbCurrency.buy_price || 0) : (dbCurrency.sell_price || 0);
+    }
+    // Fallback to API rate calculation
+    if (fallbackRate) {
+      return type === 'buy' ? getSquareBuyRate(fallbackRate) : getSquareSellRate(fallbackRate);
+    }
+    return 0;
+  };
+
+  // Exchange data - now uses DB prices if available
   const exchangeData = rates ? {
     currencies: [
       { id: 'eur', name: language === 'ar' ? 'اليورو' : 'Euro', symbol: 'EUR', icon: 'fa-euro-sign', category: 'currency',
         official: Math.round(1 / rates.currencies.EUR),
         square: getSquareRate(Math.round(1 / rates.currencies.EUR)),
-        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.EUR)),
-        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.EUR)),
+        squareBuy: getDbCurrencyPrice('EUR', 'buy', Math.round(1 / rates.currencies.EUR)) || getSquareBuyRate(Math.round(1 / rates.currencies.EUR)),
+        squareSell: getDbCurrencyPrice('EUR', 'sell', Math.round(1 / rates.currencies.EUR)) || getSquareSellRate(Math.round(1 / rates.currencies.EUR)),
         change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
       { id: 'usd', name: language === 'ar' ? 'الدولار' : 'US Dollar', symbol: 'USD', icon: 'fa-dollar-sign', category: 'currency',
         official: Math.round(1 / rates.currencies.USD),
         square: getSquareRate(Math.round(1 / rates.currencies.USD)),
-        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.USD)),
-        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.USD)),
+        squareBuy: getDbCurrencyPrice('USD', 'buy', Math.round(1 / rates.currencies.USD)) || getSquareBuyRate(Math.round(1 / rates.currencies.USD)),
+        squareSell: getDbCurrencyPrice('USD', 'sell', Math.round(1 / rates.currencies.USD)) || getSquareSellRate(Math.round(1 / rates.currencies.USD)),
         change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
       { id: 'gbp', name: language === 'ar' ? 'الجنيه' : 'Pound', symbol: 'GBP', icon: 'fa-sterling-sign', category: 'currency',
         official: Math.round(1 / rates.currencies.GBP),
         square: getSquareRate(Math.round(1 / rates.currencies.GBP)),
-        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.GBP)),
-        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.GBP)),
+        squareBuy: getDbCurrencyPrice('GBP', 'buy', Math.round(1 / rates.currencies.GBP)) || getSquareBuyRate(Math.round(1 / rates.currencies.GBP)),
+        squareSell: getDbCurrencyPrice('GBP', 'sell', Math.round(1 / rates.currencies.GBP)) || getSquareSellRate(Math.round(1 / rates.currencies.GBP)),
         change24h: +(Math.random() * 2 - 1).toFixed(2), popular: true },
       { id: 'cad', name: language === 'ar' ? 'الكندي' : 'Canadian', symbol: 'CAD', icon: 'fa-canadian-maple-leaf', category: 'currency',
         official: Math.round(1 / rates.currencies.CAD),
         square: getSquareRate(Math.round(1 / rates.currencies.CAD)),
-        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.CAD)),
-        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.CAD)),
+        squareBuy: getDbCurrencyPrice('CAD', 'buy', Math.round(1 / rates.currencies.CAD)) || getSquareBuyRate(Math.round(1 / rates.currencies.CAD)),
+        squareSell: getDbCurrencyPrice('CAD', 'sell', Math.round(1 / rates.currencies.CAD)) || getSquareSellRate(Math.round(1 / rates.currencies.CAD)),
         change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false },
       { id: 'try', name: language === 'ar' ? 'الليرة التركية' : 'Turkish Lira', symbol: 'TRY', icon: 'fa-lira-sign', category: 'currency',
         official: Math.round(1 / rates.currencies.TRY),
         square: getSquareRate(Math.round(1 / rates.currencies.TRY)),
-        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.TRY)),
-        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.TRY)),
+        squareBuy: getDbCurrencyPrice('TRY', 'buy', Math.round(1 / rates.currencies.TRY)) || getSquareBuyRate(Math.round(1 / rates.currencies.TRY)),
+        squareSell: getDbCurrencyPrice('TRY', 'sell', Math.round(1 / rates.currencies.TRY)) || getSquareSellRate(Math.round(1 / rates.currencies.TRY)),
         change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false },
       { id: 'aed', name: language === 'ar' ? 'الدرهم الإماراتي' : 'UAE Dirham', symbol: 'AED', icon: 'fa-coins', category: 'currency',
         official: Math.round(1 / rates.currencies.AED),
         square: getSquareRate(Math.round(1 / rates.currencies.AED)),
-        squareBuy: getSquareBuyRate(Math.round(1 / rates.currencies.AED)),
-        squareSell: getSquareSellRate(Math.round(1 / rates.currencies.AED)),
+        squareBuy: getDbCurrencyPrice('AED', 'buy', Math.round(1 / rates.currencies.AED)) || getSquareBuyRate(Math.round(1 / rates.currencies.AED)),
+        squareSell: getDbCurrencyPrice('AED', 'sell', Math.round(1 / rates.currencies.AED)) || getSquareSellRate(Math.round(1 / rates.currencies.AED)),
         change24h: +(Math.random() * 2 - 1).toFixed(2), popular: false }
     ],
-    crypto: [
-      { id: 'btc', name: 'Bitcoin', symbol: 'BTC', icon: 'fa-bitcoin-sign', category: 'crypto',
-        price: { dzd: 12500000, usd: 95000 },
-        change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
-      { id: 'eth', name: 'Ethereum', symbol: 'ETH', icon: 'fa-ethereum', category: 'crypto',
-        price: { dzd: 450000, usd: 3400 },
-        change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
-      { id: 'usdt', name: 'Tether', symbol: 'USDT', icon: 'fa-dollar-sign', category: 'crypto',
-        price: { dzd: 137, usd: 1 },
-        change24h: +(Math.random() * 0.5 - 0.25).toFixed(2), popular: true },
-      { id: 'bnb', name: 'Binance Coin', symbol: 'BNB', icon: 'fa-coins', category: 'crypto',
-        price: { dzd: 85000, usd: 650 },
-        change24h: +(Math.random() * 8 - 4).toFixed(2), popular: false }
-    ],
-    gold: [
-      { id: 'gold24', name: language === 'ar' ? 'ذهب 24 قيراط' : 'Gold 24K', symbol: '24K', icon: 'fa-coins', category: 'gold', buy: 15500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
-      { id: 'gold21', name: language === 'ar' ? 'ذهب 21 قيراط' : 'Gold 21K', symbol: '21K', icon: 'fa-coins', category: 'gold', buy: 13500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
-      { id: 'gold18', name: language === 'ar' ? 'ذهب 18 قيراط' : 'Gold 18K', symbol: '18K', icon: 'fa-coins', category: 'gold', buy: 11500, change24h: +(Math.random() * 2).toFixed(2), popular: false }
-    ],
-    transfer: [
-      { id: 'paysera', name: 'Paysera', symbol: 'EUR', icon: 'fa-credit-card', category: 'transfer', buy: 245, sell: 250, fees: '0.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.8 },
-      { id: 'wise', name: 'Wise', symbol: 'EUR', icon: 'fa-globe', category: 'transfer', buy: 243, sell: 248, fees: '0.7%', speed: language === 'ar' ? '1-2 يوم' : '1-2 days', rating: 4.7 },
-      { id: 'paypal', name: 'PayPal', symbol: 'USD', icon: 'fa-paypal', category: 'transfer', buy: 200, sell: 205, fees: '2.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.5 },
-      { id: 'skrill', name: 'Skrill', symbol: 'EUR', icon: 'fa-wallet', category: 'transfer', buy: 240, sell: 245, fees: '1.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.3 }
-    ]
+    crypto: dbCurrencies.filter(c => c.type === 'crypto').map(c => ({
+      id: c.code.toLowerCase(),
+      name: language === 'ar' ? c.name_ar : c.name_en,
+      symbol: c.code,
+      icon: 'fa-coins',
+      category: 'crypto',
+      price: { dzd: c.buy_price || 0, usd: Math.round((c.buy_price || 0) / 137) },
+      change24h: +(Math.random() * 10 - 5).toFixed(2),
+      popular: true
+    })).concat([
+      // Fallback if no DB crypto
+      ...(dbCurrencies.filter(c => c.type === 'crypto').length === 0 ? [
+        { id: 'btc', name: 'Bitcoin', symbol: 'BTC', icon: 'fa-bitcoin-sign', category: 'crypto', price: { dzd: 12500000, usd: 95000 }, change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
+        { id: 'eth', name: 'Ethereum', symbol: 'ETH', icon: 'fa-ethereum', category: 'crypto', price: { dzd: 450000, usd: 3400 }, change24h: +(Math.random() * 10 - 5).toFixed(2), popular: true },
+        { id: 'usdt', name: 'Tether', symbol: 'USDT', icon: 'fa-dollar-sign', category: 'crypto', price: { dzd: 137, usd: 1 }, change24h: +(Math.random() * 0.5 - 0.25).toFixed(2), popular: true }
+      ] : [])
+    ]),
+    gold: dbCurrencies.filter(c => c.type === 'gold').map(c => ({
+      id: c.code.toLowerCase(),
+      name: language === 'ar' ? c.name_ar : c.name_en,
+      symbol: c.code.replace('GOLD', ''),
+      icon: 'fa-coins',
+      category: 'gold',
+      buy: c.buy_price || 0,
+      change24h: +(Math.random() * 2).toFixed(2),
+      popular: true
+    })).concat([
+      // Fallback if no DB gold
+      ...(dbCurrencies.filter(c => c.type === 'gold').length === 0 ? [
+        { id: 'gold24', name: language === 'ar' ? 'ذهب 24 قيراط' : 'Gold 24K', symbol: '24K', icon: 'fa-coins', category: 'gold', buy: 15500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
+        { id: 'gold21', name: language === 'ar' ? 'ذهب 21 قيراط' : 'Gold 21K', symbol: '21K', icon: 'fa-coins', category: 'gold', buy: 13500, change24h: +(Math.random() * 2).toFixed(2), popular: true },
+        { id: 'gold18', name: language === 'ar' ? 'ذهب 18 قيراط' : 'Gold 18K', symbol: '18K', icon: 'fa-coins', category: 'gold', buy: 11500, change24h: +(Math.random() * 2).toFixed(2), popular: false }
+      ] : [])
+    ]),
+    transfer: dbCurrencies.filter(c => c.type === 'transfer').map(c => ({
+      id: c.code.toLowerCase(),
+      name: language === 'ar' ? c.name_ar : c.name_en,
+      symbol: 'EUR',
+      icon: 'fa-credit-card',
+      category: 'transfer',
+      buy: c.buy_price || 0,
+      sell: c.sell_price || 0,
+      fees: '0.5%',
+      speed: language === 'ar' ? 'فوري' : 'Instant',
+      rating: 4.5
+    })).concat([
+      // Fallback if no DB transfer
+      ...(dbCurrencies.filter(c => c.type === 'transfer').length === 0 ? [
+        { id: 'paysera', name: 'Paysera', symbol: 'EUR', icon: 'fa-credit-card', category: 'transfer', buy: 245, sell: 250, fees: '0.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.8 },
+        { id: 'wise', name: 'Wise', symbol: 'EUR', icon: 'fa-globe', category: 'transfer', buy: 243, sell: 248, fees: '0.7%', speed: language === 'ar' ? '1-2 يوم' : '1-2 days', rating: 4.7 },
+        { id: 'paypal', name: 'PayPal', symbol: 'USD', icon: 'fa-paypal', category: 'transfer', buy: 200, sell: 205, fees: '2.5%', speed: language === 'ar' ? 'فوري' : 'Instant', rating: 4.5 }
+      ] : [])
+    ])
   } : null;
 
   // Filter data
@@ -737,6 +789,7 @@ const IndexPHP = () => {
     isMain?: boolean;
   }) => {
     const isFlipped = flippedCards[cardId as keyof typeof flippedCards];
+    // Always show user info on ALL cards when logged in
     const displayName = registered && globalName ? globalName.toUpperCase() : 'E-SEKOIR USER';
     const displayCardNumber = registered && userWilaya ? getCardNumber(userWilaya, memberNumber) : cardNumber;
     const expiryYear = new Date().getFullYear() + 5;
