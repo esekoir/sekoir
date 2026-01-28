@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Shield, Facebook, Instagram, Send, Phone } from 'lucide-react';
+import { FileText, Shield, Facebook, Instagram, Send, Phone, Twitter } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ interface SiteSettings {
     instagram?: string;
     telegram?: string;
     whatsapp?: string;
+    x?: string;
   };
   general?: {
     contact_email?: string;
@@ -68,7 +69,7 @@ const Footer = () => {
   };
 
   const text = t[language];
-  const hasSocial = settings.social?.facebook || settings.social?.instagram || settings.social?.telegram || settings.social?.whatsapp;
+  const hasSocial = settings.social?.facebook || settings.social?.instagram || settings.social?.telegram || settings.social?.whatsapp || settings.social?.x;
   const hasLegal = settings.legal?.privacy_policy || settings.legal?.terms_of_service;
 
   if (!hasSocial && !hasLegal) return null;
@@ -142,6 +143,16 @@ const Footer = () => {
                   className={`p-2 rounded-full ${darkMode ? 'bg-gray-800 text-green-500 hover:bg-gray-700' : 'bg-white text-green-600 hover:bg-gray-50'} transition-colors`}
                 >
                   <Phone size={20} />
+                </a>
+              )}
+              {settings.social?.x && (
+                <a
+                  href={settings.social.x}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-2 rounded-full ${darkMode ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-gray-50'} transition-colors`}
+                >
+                  <Twitter size={20} />
                 </a>
               )}
             </div>

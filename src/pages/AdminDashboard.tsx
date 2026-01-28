@@ -123,7 +123,11 @@ const AdminDashboard = () => {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [activeTab, setActiveTab] = useState<'currencies' | 'users' | 'comments' | 'wallets' | 'listings' | 'chargeRequests' | 'verifyRequests' | 'notifications' | 'settings'>('currencies');
   const [uploadingCardBg, setUploadingCardBg] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [uploadingOgImage, setUploadingOgImage] = useState(false);
   const cardBgInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
+  const ogImageInputRef = useRef<HTMLInputElement>(null);
   
   // Data states
   const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -221,6 +225,8 @@ const AdminDashboard = () => {
       instagram: 'انستغرام',
       telegram: 'تيليغرام',
       whatsapp: 'واتساب',
+      x: 'X (تويتر)',
+      ogImage: 'صورة OG (للمشاركة)',
       pending: 'قيد الانتظار',
       approved: 'موافق عليه',
       rejected: 'مرفوض',
@@ -312,6 +318,8 @@ const AdminDashboard = () => {
       instagram: 'Instagram',
       telegram: 'Telegram',
       whatsapp: 'WhatsApp',
+      x: 'X (Twitter)',
+      ogImage: 'OG Image (for sharing)',
       pending: 'Pending',
       approved: 'Approved',
       rejected: 'Rejected',
@@ -450,6 +458,76 @@ const AdminDashboard = () => {
       toast({ title: error.message, variant: 'destructive' });
     } finally {
       setUploadingCardBg(false);
+    }
+  };
+
+  // Favicon upload handler
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1 * 1024 * 1024) {
+      toast({ title: language === 'ar' ? 'الحجم أكبر من 1MB' : 'File too large (max 1MB)', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingFavicon(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `branding/favicon-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('site-assets')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('site-assets')
+        .getPublicUrl(filePath);
+
+      updateSettingValue('appearance', 'favicon_url', publicUrl);
+      
+      toast({ title: language === 'ar' ? 'تم رفع الأيقونة بنجاح' : 'Favicon uploaded successfully' });
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    } finally {
+      setUploadingFavicon(false);
+    }
+  };
+
+  // OG Image upload handler
+  const handleOgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: language === 'ar' ? 'الحجم أكبر من 5MB' : 'File too large (max 5MB)', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingOgImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `branding/og-image-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('site-assets')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('site-assets')
+        .getPublicUrl(filePath);
+
+      updateSettingValue('appearance', 'og_image_url', publicUrl);
+      
+      toast({ title: language === 'ar' ? 'تم رفع صورة OG بنجاح' : 'OG Image uploaded successfully' });
+    } catch (error: any) {
+      toast({ title: error.message, variant: 'destructive' });
+    } finally {
+      setUploadingOgImage(false);
     }
   };
 
@@ -1509,18 +1587,98 @@ const AdminDashboard = () => {
                     }`}
                   />
                 </div>
+                {/* Favicon Upload */}
                 <div>
                   <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.faviconUrl}</label>
-                  <input
-                    type="text"
-                    value={getSetting('appearance').favicon_url || ''}
-                    onChange={(e) => updateSettingValue('appearance', 'favicon_url', e.target.value)}
-                    placeholder="/favicon.png"
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-800 placeholder-gray-400'
-                    }`}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      ref={faviconInputRef}
+                      type="file"
+                      accept="image/png,image/ico,image/x-icon"
+                      onChange={handleFaviconUpload}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => faviconInputRef.current?.click()}
+                      disabled={uploadingFavicon}
+                      className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                        darkMode 
+                          ? 'bg-blue-600 hover:bg-blue-700 border-blue-500 text-white' 
+                          : 'bg-blue-500 hover:bg-blue-600 border-blue-400 text-white'
+                      } ${uploadingFavicon ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Upload size={18} />
+                      {uploadingFavicon 
+                        ? (language === 'ar' ? 'جاري الرفع...' : 'Uploading...') 
+                        : (language === 'ar' ? 'رفع Favicon' : 'Upload Favicon')
+                      }
+                    </button>
+                  </div>
+                  {getSetting('appearance').favicon_url && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <img src={getSetting('appearance').favicon_url} alt="Favicon" className="w-8 h-8 rounded" />
+                      <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {language === 'ar' ? 'الأيقونة الحالية' : 'Current favicon'}
+                      </span>
+                    </div>
+                  )}
                 </div>
+              </div>
+              
+              {/* OG Image Upload */}
+              <div className="mt-4">
+                <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.ogImage}</label>
+                <p className={`text-xs mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {language === 'ar' ? 'الحجم المثالي: 1200×630 بكسل للمشاركة على السوشيال ميديا' : 'Optimal size: 1200×630px for social media sharing'}
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    ref={ogImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleOgImageUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => ogImageInputRef.current?.click()}
+                    disabled={uploadingOgImage}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                      darkMode 
+                        ? 'bg-purple-600 hover:bg-purple-700 border-purple-500 text-white' 
+                        : 'bg-purple-500 hover:bg-purple-600 border-purple-400 text-white'
+                    } ${uploadingOgImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <Upload size={18} />
+                    {uploadingOgImage 
+                      ? (language === 'ar' ? 'جاري الرفع...' : 'Uploading...') 
+                      : (language === 'ar' ? 'رفع صورة OG' : 'Upload OG Image')
+                    }
+                  </button>
+                  {getSetting('appearance').og_image_url && (
+                    <button
+                      onClick={() => updateSettingValue('appearance', 'og_image_url', '')}
+                      className={`px-4 py-3 rounded-xl border transition-colors ${
+                        darkMode 
+                          ? 'bg-red-600/20 hover:bg-red-600/30 border-red-500/50 text-red-400' 
+                          : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600'
+                      }`}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+                {getSetting('appearance').og_image_url && (
+                  <div className="mt-3 p-3 rounded-xl border border-dashed border-gray-500">
+                    <p className={`text-xs mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {language === 'ar' ? 'الصورة الحالية:' : 'Current OG Image:'}
+                    </p>
+                    <img 
+                      src={getSetting('appearance').og_image_url} 
+                      alt="OG Image" 
+                      className="w-full max-w-md h-auto rounded-lg object-cover"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1872,6 +2030,18 @@ const AdminDashboard = () => {
                       darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'
                     }`}
                     placeholder="+213..."
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{t.x}</label>
+                  <input
+                    type="url"
+                    value={getSetting('social').x || ''}
+                    onChange={(e) => updateSettingValue('social', 'x', e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'
+                    }`}
+                    placeholder="https://x.com/..."
                   />
                 </div>
               </div>
