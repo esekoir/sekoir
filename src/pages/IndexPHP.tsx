@@ -850,10 +850,6 @@ const IndexPHP = () => {
             {/* Card Title/Bank Name */}
             <div className="relative flex justify-between items-start mb-1">
               <div className="text-xl font-bold tracking-wide">{title}</div>
-              {/* Contactless Symbol */}
-              <div className="card-contactless">
-                <span></span>
-              </div>
             </div>
 
             {/* Chip */}
@@ -917,7 +913,7 @@ const IndexPHP = () => {
                     <div className="text-2xl font-bold">{balanceAmount.toFixed(2)} DZD</div>
                   </div>
                   <button 
-                    onClick={handleCharge}
+                    onClick={() => window.location.href = '/account?charge=true'}
                     className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2"
                   >
                     <Zap size={16} />

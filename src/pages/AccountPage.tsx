@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +45,7 @@ interface VerificationPlan {
 
 const AccountPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user, profile, signOut, loading: authLoading } = useAuth();
   const { darkMode, language } = useLanguage();
@@ -81,6 +82,13 @@ const AccountPage = () => {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  // Open charge dialog from URL param
+  useEffect(() => {
+    if (searchParams.get('charge') === 'true' && user) {
+      setShowChargeDialog(true);
+    }
+  }, [searchParams, user]);
 
   useEffect(() => {
     if (profile) {

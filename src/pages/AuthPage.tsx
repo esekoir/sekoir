@@ -22,6 +22,10 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
+  const [legalContent, setLegalContent] = useState<{ privacy_policy?: string; terms_of_service?: string }>({});
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -34,7 +38,8 @@ const AuthPage = () => {
     password: '',
     fullName: '',
     username: '',
-    wilaya: ''
+    wilaya: '',
+    terms: ''
   });
 
   useEffect(() => {
@@ -42,6 +47,23 @@ const AuthPage = () => {
       navigate('/account');
     }
   }, [isAuthenticated, authLoading, navigate]);
+
+  // Fetch legal content from settings
+  useEffect(() => {
+    const fetchLegalContent = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'legal')
+        .maybeSingle();
+      
+      if (data?.value && typeof data.value === 'object' && !Array.isArray(data.value)) {
+        const val = data.value as { privacy_policy?: string; terms_of_service?: string };
+        setLegalContent(val);
+      }
+    };
+    fetchLegalContent();
+  }, []);
 
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -102,7 +124,7 @@ const AuthPage = () => {
 
 
   const validateForm = () => {
-    const newErrors = { email: '', password: '', fullName: '', username: '', wilaya: '' };
+    const newErrors = { email: '', password: '', fullName: '', username: '', wilaya: '', terms: '' };
     let isValid = true;
 
     try {
@@ -137,6 +159,10 @@ const AuthPage = () => {
       }
       if (!/^\d{2}$/.test(formData.wilaya)) {
         newErrors.wilaya = language === 'ar' ? 'رقم الولاية غير صحيح (رقمين)' : 'Invalid wilaya (2 digits)';
+        isValid = false;
+      }
+      if (!agreedToTerms) {
+        newErrors.terms = language === 'ar' ? 'يجب الموافقة على الشروط والخصوصية' : 'You must agree to Terms and Privacy';
         isValid = false;
       }
     }
@@ -426,6 +452,39 @@ const AuthPage = () => {
                 )}
               </div>
 
+              {/* Terms & Privacy Checkbox - Only for Registration */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <label className={`flex items-start gap-3 cursor-pointer ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <input
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded accent-emerald-600"
+                    />
+                    <span className="text-sm">
+                      {language === 'ar' ? 'أوافق على ' : 'I agree to the '}
+                      <button
+                        type="button"
+                        onClick={() => setShowTermsDialog(true)}
+                        className="text-emerald-500 hover:underline font-semibold"
+                      >
+                        {language === 'ar' ? 'شروط الاستخدام' : 'Terms of Service'}
+                      </button>
+                      {language === 'ar' ? ' و' : ' and '}
+                      <button
+                        type="button"
+                        onClick={() => setShowPrivacyDialog(true)}
+                        className="text-emerald-500 hover:underline font-semibold"
+                      >
+                        {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
+                      </button>
+                    </span>
+                  </label>
+                  {errors.terms && <p className="text-red-500 text-sm">{errors.terms}</p>}
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -505,6 +564,46 @@ const AuthPage = () => {
                 {t.backToLogin}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Terms of Service Dialog */}
+      {showTermsDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto`}>
+            <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              {language === 'ar' ? 'شروط الاستخدام' : 'Terms of Service'}
+            </h3>
+            <div className={`prose ${darkMode ? 'prose-invert' : ''} text-sm whitespace-pre-wrap`}>
+              {legalContent.terms_of_service || (language === 'ar' ? 'لم يتم إضافة شروط الاستخدام بعد.' : 'Terms of Service not yet added.')}
+            </div>
+            <button
+              onClick={() => setShowTermsDialog(false)}
+              className="mt-4 w-full bg-emerald-500 text-white py-3 rounded-xl font-bold"
+            >
+              {language === 'ar' ? 'إغلاق' : 'Close'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Policy Dialog */}
+      {showPrivacyDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto`}>
+            <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
+            </h3>
+            <div className={`prose ${darkMode ? 'prose-invert' : ''} text-sm whitespace-pre-wrap`}>
+              {legalContent.privacy_policy || (language === 'ar' ? 'لم يتم إضافة سياسة الخصوصية بعد.' : 'Privacy Policy not yet added.')}
+            </div>
+            <button
+              onClick={() => setShowPrivacyDialog(false)}
+              className="mt-4 w-full bg-emerald-500 text-white py-3 rounded-xl font-bold"
+            >
+              {language === 'ar' ? 'إغلاق' : 'Close'}
+            </button>
           </div>
         </div>
       )}
