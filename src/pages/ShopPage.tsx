@@ -77,6 +77,7 @@ const ShopPage = () => {
   const [newComment, setNewComment] = useState<{ [key: string]: string }>({});
   const [guestName, setGuestName] = useState('');
   const [expandedComments, setExpandedComments] = useState<string[]>([]);
+  const [shopSettings, setShopSettings] = useState<{ enabled: boolean; disabled_message: string }>({ enabled: true, disabled_message: '' });
 
   const [newListing, setNewListing] = useState({
     type: 'sell' as 'buy' | 'sell',
@@ -185,6 +186,23 @@ const ShopPage = () => {
   const currencies = ['EUR', 'USD', 'GBP', 'CAD', 'TRY', 'AED', 'BTC', 'USDT', 'ETH'];
 
   useEffect(() => {
+    // Fetch shop settings first
+    const fetchShopSettings = async () => {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'shop')
+        .maybeSingle();
+      
+      if (data?.value && typeof data.value === 'object' && !Array.isArray(data.value)) {
+        const val = data.value as { enabled?: boolean; disabled_message?: string };
+        setShopSettings({
+          enabled: val.enabled !== false,
+          disabled_message: val.disabled_message || ''
+        });
+      }
+    };
+    fetchShopSettings();
     // Fetch listings without blocking UI
     fetchListings().finally(() => setInitialLoading(false));
   }, []);
@@ -523,6 +541,21 @@ const ShopPage = () => {
       </header>
 
       <div className="container mx-auto px-4 py-6 max-w-2xl pt-20">
+        {/* Shop Disabled Message */}
+        {!shopSettings.enabled && (
+          <div className={`mb-6 p-6 rounded-2xl text-center ${darkMode ? 'bg-red-900/30 border border-red-500/50' : 'bg-red-50 border border-red-200'}`}>
+            <ShoppingCart size={48} className={`mx-auto mb-4 ${darkMode ? 'text-red-400' : 'text-red-500'}`} />
+            <h2 className={`text-xl font-bold mb-2 ${darkMode ? 'text-red-400' : 'text-red-600'}`}>
+              {language === 'ar' ? 'السوق معطل حالياً' : 'Shop is Currently Disabled'}
+            </h2>
+            <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
+              {shopSettings.disabled_message || (language === 'ar' ? 'السوق مغلق مؤقتاً' : 'The marketplace is temporarily closed')}
+            </p>
+          </div>
+        )}
+
+        {shopSettings.enabled && (
+          <>
         {/* Filters */}
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 mb-6 shadow-lg`}>
           <div className="flex flex-wrap gap-2 items-center">
@@ -776,6 +809,8 @@ const ShopPage = () => {
             ))
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Create Listing Dialog */}

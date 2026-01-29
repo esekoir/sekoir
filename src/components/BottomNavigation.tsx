@@ -11,11 +11,13 @@ export const BottomNavigation: React.FC = memo(() => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     if (user) {
       fetchUnreadCount();
-      const channel = supabase
+      fetchNotificationCount();
+      const messagesChannel = supabase
         .channel('nav-messages')
         .on(
           'postgres_changes',
@@ -29,8 +31,23 @@ export const BottomNavigation: React.FC = memo(() => {
         )
         .subscribe();
 
+      const notifChannel = supabase
+        .channel('nav-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => fetchNotificationCount()
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(messagesChannel);
+        supabase.removeChannel(notifChannel);
       };
     }
   }, [user]);
@@ -44,6 +61,17 @@ export const BottomNavigation: React.FC = memo(() => {
       .eq('is_read', false);
     
     setUnreadMessages(count || 0);
+  };
+
+  const fetchNotificationCount = async () => {
+    if (!user) return;
+    const { count } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false);
+    
+    setUnreadNotifications(count || 0);
   };
 
   const getActiveItem = () => {
@@ -86,14 +114,21 @@ export const BottomNavigation: React.FC = memo(() => {
           {/* Account */}
           <button 
             onClick={() => handleNavClick('account')}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+            className={`relative flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
               activeItem === 'account' 
                 ? 'text-emerald-600 dark:text-emerald-400' 
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
             type="button"
           >
-            <User size={22} />
+            <div className="relative">
+              <User size={22} />
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </span>
+              )}
+            </div>
             <span className="text-xs font-medium">{language === 'ar' ? 'الحساب' : 'Account'}</span>
           </button>
 

@@ -1095,7 +1095,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Users Tab */}
+        {/* Users Tab - Enhanced Management */}
         {activeTab === 'users' && (
           <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl overflow-hidden`}>
             <div className="overflow-x-auto">
@@ -1105,56 +1105,84 @@ const AdminDashboard = () => {
                     <th className="px-4 py-3 text-right">{t.memberNumber}</th>
                     <th className="px-4 py-3 text-right">{language === 'ar' ? 'الاسم' : 'Name'}</th>
                     <th className="px-4 py-3 text-right">{language === 'ar' ? 'المستخدم' : 'Username'}</th>
+                    <th className="px-4 py-3 text-right">{language === 'ar' ? 'الولاية' : 'Wilaya'}</th>
                     <th className="px-4 py-3 text-right">{language === 'ar' ? 'الحالة' : 'Status'}</th>
-                    <th className="px-4 py-3 text-right"></th>
+                    <th className="px-4 py-3 text-right">{language === 'ar' ? 'الإجراءات' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody className={darkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}>
-                  {filteredProfiles.map((profile) => (
-                    <tr key={profile.id} className={darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
-                      <td className={`px-4 py-3 font-mono ${darkMode ? 'text-white' : 'text-gray-800'}`}>#{profile.member_number}</td>
-                      <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        <div className="flex items-center gap-2">
-                          {profile.avatar_url && <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-full" />}
-                          {profile.full_name || '-'}
-                        </div>
-                      </td>
-                      <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>@{profile.username || '-'}</td>
-                      <td className="px-4 py-3">
-                        {profile.is_verified ? (
-                          <span className="flex items-center gap-1 text-green-500">
-                            <CheckCircle size={16} />
-                            {t.verify}
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-gray-500">
-                            <XCircle size={16} />
-                            {t.unverify}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => handleToggleVerify(profile)}
-                            className={`p-2 rounded-lg ${
-                              profile.is_verified 
-                                ? 'bg-orange-500/20 text-orange-500 hover:bg-orange-500/30' 
-                                : 'bg-green-500/20 text-green-500 hover:bg-green-500/30'
-                            }`}
-                          >
-                            {profile.is_verified ? <XCircle size={16} /> : <CheckCircle size={16} />}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProfile(profile.user_id)}
-                            className="p-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredProfiles.map((profile) => {
+                    const userWallet = wallets.find(w => w.user_id === profile.user_id);
+                    return (
+                      <tr key={profile.id} className={darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
+                        <td className={`px-4 py-3 font-mono ${darkMode ? 'text-white' : 'text-gray-800'}`}>#{profile.member_number}</td>
+                        <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <div className="flex items-center gap-2">
+                            {profile.avatar_url && <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-full" />}
+                            <div>
+                              <div className="font-semibold">{profile.full_name || '-'}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>@{profile.username || '-'}</td>
+                        <td className={`px-4 py-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{profile.wilaya || '-'}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col gap-1">
+                            {profile.is_verified ? (
+                              <span className="flex items-center gap-1 text-green-500 text-sm">
+                                <CheckCircle size={14} />
+                                {t.verify}
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-gray-500 text-sm">
+                                <XCircle size={14} />
+                                {t.unverify}
+                              </span>
+                            )}
+                            {userWallet && (
+                              <span className={`text-xs ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                {userWallet.balance.toFixed(2)} DZD
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2 justify-end flex-wrap">
+                            {/* Toggle Verify */}
+                            <button
+                              onClick={() => handleToggleVerify(profile)}
+                              className={`p-2 rounded-lg ${
+                                profile.is_verified 
+                                  ? 'bg-orange-500/20 text-orange-500 hover:bg-orange-500/30' 
+                                  : 'bg-green-500/20 text-green-500 hover:bg-green-500/30'
+                              }`}
+                              title={profile.is_verified ? (language === 'ar' ? 'إلغاء التوثيق' : 'Unverify') : (language === 'ar' ? 'توثيق' : 'Verify')}
+                            >
+                              {profile.is_verified ? <XCircle size={16} /> : <CheckCircle size={16} />}
+                            </button>
+                            {/* Charge Balance */}
+                            {userWallet && (
+                              <button
+                                onClick={() => openChargeDialog(userWallet)}
+                                className="p-2 bg-emerald-500/20 text-emerald-500 rounded-lg hover:bg-emerald-500/30"
+                                title={language === 'ar' ? 'شحن رصيد' : 'Charge Balance'}
+                              >
+                                <CreditCard size={16} />
+                              </button>
+                            )}
+                            {/* Delete User */}
+                            <button
+                              onClick={() => handleDeleteProfile(profile.user_id)}
+                              className="p-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30"
+                              title={language === 'ar' ? 'حذف' : 'Delete'}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
